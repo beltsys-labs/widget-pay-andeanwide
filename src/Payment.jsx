@@ -34,6 +34,29 @@ let preflight = async ({ accept, integration }) => {
   })
 }
 
+// Función para cargar la configuración del backend ANTES de montar el widget
+let loadIntegrationConfig = async (integrationId) => {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/button-pays/${integrationId}`,
+      {
+        method: 'GET',
+        headers: { "accept": "application/json" }
+      }
+    )
+    
+    if (response.status === 200) {
+      const { configuration } = await response.json()
+      return configuration
+    }
+    
+    throw new Error(`Failed to load configuration: ${response.status}`)
+  } catch (error) {
+    console.error('Error loading integration config:', error)
+    throw error
+  }
+}
+
 let Payment = async ({
   accept,
   amount,
@@ -77,8 +100,38 @@ let Payment = async ({
   if (currency && !SUPPORTED_CURRENCIES.includes(currency.toLowerCase())) { currency = undefined }
   try {
     await preflight({ accept, integration })
+    
+    // Si hay integration, cargar la configuración ANTES de montar
+    let finalStyle = style
+    if (integration) {
+      const backendConfig = await loadIntegrationConfig(integration)
+      
+      // Hacer merge del style: backend + local (local tiene prioridad por campo)
+      if (backendConfig?.style) {
+        const backendStyle = backendConfig.style
+        const localStyle = style || {}
+        
+        finalStyle = {}
+        
+        // Merge colors
+        if (backendStyle.colors || localStyle.colors) {
+          finalStyle.colors = { ...backendStyle.colors, ...localStyle.colors }
+        }
+        
+        // Merge colorsDarkMode
+        if (backendStyle.colorsDarkMode || localStyle.colorsDarkMode) {
+          finalStyle.colorsDarkMode = { ...backendStyle.colorsDarkMode, ...localStyle.colorsDarkMode }
+        }
+        
+        // Otros campos: local tiene prioridad
+        finalStyle.fontFamily = localStyle.fontFamily || backendStyle.fontFamily
+        finalStyle.css = localStyle.css || backendStyle.css
+        finalStyle.cssDarkMode = localStyle.cssDarkMode || backendStyle.cssDarkMode
+      }
+    }
+    
     if (typeof window._depayUnmountLoading == 'function') { window._depayUnmountLoading() }
-    let unmount = mount({ style, container, document: ensureDocument(document), closed }, (unmount) => {
+    let unmount = mount({ style: finalStyle, container, document: ensureDocument(document), closed }, (unmount) => {
       return (container) =>
         <TranslationProvider locale={locale} translations={translations}>
           <ErrorProvider errorCallback={error} criticalCallback={critical} container={container} unmount={unmount}>

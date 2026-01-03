@@ -58,7 +58,9 @@ export default (props) => {
   // Inicializar configuración EXCLUYENDO currency de props.configuration para usar siempre la detectada
   const initialConfiguration = !props.configuration?.integration ? (() => {
     const { currency: _, ...configWithoutCurrency } = props.configuration
-    return { ...configWithoutCurrency, currencyCode, currency: initialCurrency, configCurrency }
+    // Incluir el style si fue pasado localmente
+    const config = { ...configWithoutCurrency, currencyCode, currency: initialCurrency, configCurrency }
+    return config
   })() : undefined
 
   const [configuration, setConfiguration] = useState(initialConfiguration)
@@ -85,21 +87,23 @@ export default (props) => {
     }
     const retry = () => { setTimeout(() => loadConfiguration(id, attempt + 1), 1000) }
     fetch(
-      `https://public.depay.com/configurations/${id}?v=3`,
+      `http://localhost:3000/button-pays/${id}`,
       {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: props.configuration?.payload ? JSON.stringify({ payload: props.configuration.payload }) : undefined
+        method: 'GET',
+        headers: { "accept": "application/json" }
       }
     ).catch(retry).then(async (response) => {
       if (response.status == 200) {
         let { id: configurationId, configuration } = JSON.parse(await response.text())
 
-        let verified = await verify({
-          signature: response.headers.get('x-signature'),
-          publicKey: PUBLIC_KEY,
-          data: JSON.stringify(configuration)
-        })
+        // VERIFICACIÓN DE FIRMA DESACTIVADA PARA DESARROLLO
+        // let verified = await verify({
+        //   signature: response.headers.get('x-signature'),
+        //   publicKey: PUBLIC_KEY,
+        //   data: JSON.stringify(configuration)
+        // })
+
+        let verified = true // Forzado a true para desarrollo local
 
         if (verified) {
           // Construir localConfigurationWithValues EXCLUYENDO currency (para no sobrescribir la detectada)

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DePay Integration ID Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.1/ethers.umd.min.js"
+        type="application/javascript"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/decimal.js@10/decimal.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin
+        src="https://cdn.jsdelivr.net/npm/@uiw/copy-to-clipboard/dist/copy-to-clipboard.umd.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/solana-web3.js@1.98.2"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/local-currency@3"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/react-dialog@14"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/react-dialog-stack@8"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/react-shadow-dom@5"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/js-verify-signature-web@3"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-blockchains@9.8.10"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-client@11.1.10"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-tokens@11.1.0"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/react-token-image@6"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/coinbase-wallet-sdk@3"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/walletconnect-v2@2.12.2"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-wallets@18.1.17"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-exchanges@15"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-payments@15.3.2"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/qr-code-styling@1"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/fuse.js@6"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react-rangeslider@2/umd/rangeslider.js"></script>
+    <script crossorigin
+        src="https://cdn.jsdelivr.net/npm/@tanstack/react-virtual@3.0.0-beta.54/build/umd/index.production.js"></script>
+    <script src="tmp/index.dev.js" onload="window._depayWidgetsLoaded = true;"
+        onerror="window._depayWidgetsLoadError = true;"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/react-toastify@9/dist/ReactToastify.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.css">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .card {
+            margin-bottom: 20px;
+        }
+
+        .info-section {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .selected {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container">
+        <h1 class="text-center mb-4">DePay Integration ID Demo</h1>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="info-section">
+                    <h5>Backend Configuration</h5>
+                    <p><strong>Integration ID:</strong> <code>6959493f4b7aaa8ce4e762fa</code></p>
+                    <p><strong>Endpoint:</strong>
+                        <code>GET http://localhost:3000/button-pays/6959493f4b7aaa8ce4e762fa</code>
+                    </p>
+                    <small class="text-muted">El backend debe enviar: accept, amount, fees, etc.</small>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>Frontend Configuration</h3>
+                    <small class="text-muted mb-3 d-block">Solo language y theme mode (los colores vienen del
+                        backend)</small>
+
+                    <div class="form-group">
+                        <label>Language (Auto-detectado)</label>
+                        <div class="d-flex justify-content-center mt-2 flex-wrap" id="lang-selector">
+                            <button class="btn btn-outline-secondary m-1 lang-btn" data-lang="en">EN</button>
+                            <button class="btn btn-outline-secondary m-1 lang-btn" data-lang="es">ES</button>
+                            <button class="btn btn-outline-secondary m-1 lang-btn" data-lang="fr">FR</button>
+                            <button class="btn btn-outline-secondary m-1 lang-btn" data-lang="pt">PT</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label>Theme Mode</label>
+                        <select id="theme-mode" class="form-control">
+                            <option value="auto">Auto (Detecta del sistema)</option>
+                            <option value="light">Light (Forzar claro)</option>
+                            <option value="dark">Dark (Forzar oscuro)</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            Auto: usa colores del backend según prefers-color-scheme<br>
+                            Light/Dark: fuerza un modo específico
+                        </small>
+                    </div>
+                </div>
+
+                <button class="btn btn-success btn-lg btn-block py-3" id="start-widget">
+                    Iniciar Widget
+                </button>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Widget Preview</h5>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center bg-white rounded"
+                        style="min-height: 600px;">
+                        <div id="widget-container"
+                            style="position: relative; width: 100%; height: 100%; min-height: 600px; display: flex; align-items: center; justify-content: center;">
+                            <p class="text-muted">El widget aparecerá aquí</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Log de Eventos</h5>
+                        <button class="btn btn-sm btn-outline-secondary" id="clear-events">Limpiar</button>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <div id="events-log">
+                            <p class="text-muted text-center">Los eventos aparecerán aquí...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let widgetInstance = null;
+        let selectedLang = 'es';
+
+        // Detectar idioma del navegador automáticamente
+        function detectBrowserLanguage() {
+            const browserLang = navigator.language || navigator.userLanguage;
+            const langCode = browserLang.split('-')[0].toLowerCase();
+
+            // Idiomas soportados
+            const supportedLangs = ['en', 'es', 'fr', 'pt'];
+
+            return supportedLangs.includes(langCode) ? langCode : 'en';
+        }
+
+        // Inicializar con idioma detectado
+        selectedLang = detectBrowserLanguage();
+
+        // Marcar el botón del idioma detectado
+        document.addEventListener('DOMContentLoaded', () => {
+            const langBtn = document.querySelector(`.lang-btn[data-lang="${selectedLang}"]`);
+            if (langBtn) {
+                langBtn.classList.add('selected');
+            }
+        });
+
+        // Language Selection Logic
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('selected'));
+                e.target.classList.add('selected');
+                selectedLang = e.target.dataset.lang;
+            });
+        });
+
+        // Función para agregar eventos al log
+        const addEventToLog = (eventName, data) => {
+            const eventsLog = document.getElementById('events-log');
+            if (eventsLog.querySelector('p.text-muted')) {
+                eventsLog.innerHTML = '';
+            }
+
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'alert alert-info mb-2';
+            const timestamp = new Date().toLocaleTimeString();
+
+            let dataStr = '';
+            try {
+                dataStr = JSON.stringify(data, null, 2);
+            } catch (e) {
+                dataStr = String(data);
+            }
+
+            eventDiv.innerHTML = `
+                <div>
+                    <strong>${eventName}</strong> <small class="text-muted">(${timestamp})</small>
+                    <pre class="mt-2 mb-0" style="font-size: 11px; max-height: 150px; overflow-y: auto;">${dataStr}</pre>
+                </div>
+            `;
+
+            eventsLog.insertBefore(eventDiv, eventsLog.firstChild);
+
+            // Mantener solo los últimos 10 eventos
+            while (eventsLog.children.length > 10) {
+                eventsLog.removeChild(eventsLog.lastChild);
+            }
+        };
+
+        // Limpiar eventos
+        document.getElementById('clear-events').addEventListener('click', () => {
+            const eventsLog = document.getElementById('events-log');
+            eventsLog.innerHTML = '<p class="text-muted text-center">Los eventos aparecerán aquí...</p>';
+        });
+
+        document.getElementById('start-widget').addEventListener('click', async () => {
+            // Unmount existing widget if any
+            if (widgetInstance && widgetInstance.unmount) {
+                widgetInstance.unmount();
+                widgetInstance = null;
+                document.getElementById('widget-container').innerHTML = '';
+            }
+
+            // Wait for DePayWidgets to be available
+            const waitForDePayWidgets = () => {
+                return new Promise((resolve, reject) => {
+                    if (window.DePayWidgets) {
+                        resolve(window.DePayWidgets);
+                        return;
+                    }
+
+                    if (window._depayWidgetsLoadError) {
+                        reject(new Error('Failed to load tmp/index.dev.js'));
+                        return;
+                    }
+
+                    let attempts = 0;
+                    const maxAttempts = 100;
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        if (window.DePayWidgets) {
+                            clearInterval(checkInterval);
+                            resolve(window.DePayWidgets);
+                        } else if (window._depayWidgetsLoadError) {
+                            clearInterval(checkInterval);
+                            reject(new Error('Failed to load tmp/index.dev.js'));
+                        } else if (attempts >= maxAttempts) {
+                            clearInterval(checkInterval);
+                            reject(new Error('DePayWidgets failed to load after 10 seconds'));
+                        }
+                    }, 100);
+                });
+            };
+
+            try {
+                const DePayWidgets = await waitForDePayWidgets();
+
+                addEventToLog('info', { message: 'Iniciando widget con Integration ID...', locale: selectedLang });
+
+                // Obtener theme mode del formulario
+                const themeMode = document.getElementById('theme-mode').value;
+
+                // Nota: El theme mode (light/dark) se detecta automáticamente del sistema vía prefers-color-scheme
+                // El backend debe enviar tanto 'colors' como 'colorsDarkMode' en style
+                // Para forzar un modo específico, habría que manipular prefers-color-scheme con CSS
+
+                // Configuración del widget
+                const widgetConfig = {
+                    // Integration ID - obtiene configuración del backend
+                    integration: '6959493f4b7aaa8ce4e762fa',
+
+                    // Container
+                    container: document.getElementById('widget-container'),
+
+                    // Configuración local (solo locale)
+                    // Estilos, colores, accept, fees, etc. vienen del backend
+                    locale: selectedLang,
+
+                    // Callbacks (siempre locales)
+                    before: async (payment, from) => {
+                        addEventToLog('before', { payment, from });
+                        return true;
+                    },
+
+                    sent: (transaction, paymentRoute) => {
+                        addEventToLog('sent', { transaction, paymentRoute });
+                    },
+
+                    succeeded: (transaction, payment) => {
+                        addEventToLog('succeeded', { transaction, payment });
+                    },
+
+                    validated: (successful, transaction, payment) => {
+                        addEventToLog('validated', { successful, transaction, payment });
+                    },
+
+                    failed: (transaction, error, payment) => {
+                        addEventToLog('failed', { transaction, error, payment });
+                    },
+
+                    error: (error) => {
+                        addEventToLog('error', { error: error.toString(), errorObject: error });
+                    },
+
+                    critical: (error) => {
+                        addEventToLog('critical', { error: error.toString(), errorObject: error });
+                        alert('Error crítico: ' + error.toString());
+                    }
+                };
+
+                widgetInstance = await DePayWidgets.Payment(widgetConfig);
+
+                addEventToLog('info', { message: 'Widget iniciado correctamente' });
+
+            } catch (e) {
+                addEventToLog('error', { message: "Failed to load widget: " + e.message, error: e.toString() });
+                alert("Failed to load widget: " + e.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
