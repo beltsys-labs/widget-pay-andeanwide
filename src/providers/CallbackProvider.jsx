@@ -1,9 +1,12 @@
 import CallbackContext from '../contexts/CallbackContext'
 import ConfigurationContext from '../contexts/ConfigurationContext'
 import React, { useContext, useRef } from 'react'
+import { toast } from 'react-toastify'
+import { useTranslation } from '../providers/TranslationProvider'
 
 export default (props)=>{
   const { sent, succeeded, failed, validated } = useContext(ConfigurationContext)
+  const { t } = useTranslation()
 
   const sentCallbackCalled = useRef()
   const succeededCallbackCalled = useRef()
@@ -11,6 +14,10 @@ export default (props)=>{
   const validatedCallbackCalled = useRef()
 
   const callSentCallback = (transaction, paymentRoute)=>{
+    toast.info(t('toast.sent') || 'Payment sent to network', {
+      position: "bottom-center",
+      autoClose: 4000,
+    })
     if(typeof sent === 'function' && sentCallbackCalled.current !== true) {
       sentCallbackCalled.current = true
       setTimeout(()=>sent(transaction, paymentRoute), 200)
@@ -18,6 +25,10 @@ export default (props)=>{
   }
 
   const callSucceededCallback = (transaction, paymentRoute)=>{
+    toast.success(t('toast.succeeded') || 'Payment confirmed successfully', {
+      position: "bottom-center",
+      autoClose: 4000,
+    })
     if(typeof succeeded === 'function' && succeededCallbackCalled.current !== true) {
       succeededCallbackCalled.current = true
       setTimeout(()=>succeeded(transaction, paymentRoute), 200)
@@ -25,6 +36,10 @@ export default (props)=>{
   }
 
   const callFailedCallback = (transaction, paymentRoute)=>{
+    toast.error(t('toast.failed') || 'Payment failed on blockchain', {
+      position: "bottom-center",
+      autoClose: 5000,
+    })
     if(typeof failed === 'function' && failedCallbackCalled.current !== true) {
       failedCallbackCalled.current = true
       setTimeout(()=>failed(transaction, paymentRoute), 200)

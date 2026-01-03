@@ -41,7 +41,6 @@ let Loading = async ({
     window._depayUnmountLoading = unmount
     return { unmount }
   } catch (error) {
-    console.log('critical error', error)
     if(critical != undefined) {
       critical(error)
     }

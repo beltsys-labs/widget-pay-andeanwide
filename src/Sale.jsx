@@ -13,13 +13,14 @@ import React from 'react'
 import requireReactVersion from './helpers/requireReactVersion'
 import SaleRoutingProvider from './providers/SaleRoutingProvider'
 import SaleStack from './stacks/SaleStack'
+import TranslationProvider from './providers/TranslationProvider'
 import UpdatableProvider from './providers/UpdatableProvider'
 import WalletProvider from './providers/WalletProvider'
 
-let preflight = async({ sell }) => {
-  if(typeof sell != 'object') { throw('You need to configure at least 1 "blockchain": "token"') }
-  if(Object.keys(sell).length == 0) { throw('You need to configure at least 1 "blockchain": "token"') }
-  if(Object.values(sell).length == 0) { throw('You need to configure at least 1 "blockchain": "token"') }
+let preflight = async ({ sell }) => {
+  if (typeof sell != 'object') { throw ('You need to configure at least 1 "blockchain": "token"') }
+  if (Object.keys(sell).length == 0) { throw ('You need to configure at least 1 "blockchain": "token"') }
+  if (Object.values(sell).length == 0) { throw ('You need to configure at least 1 "blockchain": "token"') }
 }
 
 let Sale = async ({
@@ -42,52 +43,57 @@ let Sale = async ({
   closable,
   integration,
   wallet,
-  document
+  document,
+  locale,
+  translations,
+  poweredBy,
+  supportUrl
 }) => {
   requireReactVersion()
   try {
     await preflight({ sell })
-    const accept = Object.keys(sell).map((key)=>({ blockchain: key, token: sell[key] }))
+    const accept = Object.keys(sell).map((key) => ({ blockchain: key, token: sell[key] }))
     deny = Object.assign(deny || {})
-    Object.keys(sell).forEach((key)=>{
-      if(!deny[key]) { deny[key] = [] }
+    Object.keys(sell).forEach((key) => {
+      if (!deny[key]) { deny[key] = [] }
       deny[key].push(sell[key])
       deny[key] = [...new Set(deny[key])]
     })
-    let unmount = mount({ style, document: ensureDocument(document), closed }, (unmount)=> {
-      return (container)=>
-        <ErrorProvider errorCallback={ error } container={ container } unmount={ unmount }>
-          <ConfigurationProvider configuration={{ type: 'sale', accept, before, tokenImage, amount, sell, currency, sent, succeeded, failed, deny, blacklist, providers, integration, wallet }}>
-            <CallbackProvider>
-              <UpdatableProvider>
-                <ClosableProvider unmount={ unmount } closable={ closable }>
-                  <WalletProvider container={ container } connected={ connected } unmount={ unmount }>
-                    <NavigateProvider>
-                      <ConversionRateProvider>
-                        <ChangableAmountProvider>
-                          <PaymentTrackingProvider document={ ensureDocument(document) }>
-                            <SaleRoutingProvider container={ container } document={ document }>
-                              <SaleStack
-                                document={ document }
-                                container={ container }
-                              />
-                              <PoweredBy/>
-                            </SaleRoutingProvider>
-                          </PaymentTrackingProvider>
-                        </ChangableAmountProvider>
-                      </ConversionRateProvider>
-                    </NavigateProvider>
-                  </WalletProvider>
-                </ClosableProvider>
-              </UpdatableProvider>
-            </CallbackProvider>
-          </ConfigurationProvider>
-        </ErrorProvider>
+    let unmount = mount({ style, document: ensureDocument(document), closed }, (unmount) => {
+      return (container) =>
+        <TranslationProvider locale={locale} translations={translations}>
+          <ErrorProvider errorCallback={error} container={container} unmount={unmount}>
+            <ConfigurationProvider configuration={{ type: 'sale', accept, before, tokenImage, amount, sell, currency, sent, succeeded, failed, deny, blacklist, providers, integration, wallet, poweredBy, supportUrl }}>
+              <CallbackProvider>
+                <UpdatableProvider>
+                  <ClosableProvider unmount={unmount} closable={closable}>
+                    <WalletProvider container={container} connected={connected} unmount={unmount}>
+                      <NavigateProvider>
+                        <ConversionRateProvider>
+                          <ChangableAmountProvider>
+                            <PaymentTrackingProvider document={ensureDocument(document)}>
+                              <SaleRoutingProvider container={container} document={document}>
+                                <SaleStack
+                                  document={document}
+                                  container={container}
+                                />
+                                <PoweredBy />
+                              </SaleRoutingProvider>
+                            </PaymentTrackingProvider>
+                          </ChangableAmountProvider>
+                        </ConversionRateProvider>
+                      </NavigateProvider>
+                    </WalletProvider>
+                  </ClosableProvider>
+                </UpdatableProvider>
+              </CallbackProvider>
+            </ConfigurationProvider>
+          </ErrorProvider>
+        </TranslationProvider>
     })
     return { unmount }
   } catch (error) {
-    console.log('critical error', error)
-    if(critical != undefined) {
+    if (critical != undefined) {
       critical(error)
     }
   }

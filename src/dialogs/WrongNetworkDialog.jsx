@@ -4,45 +4,47 @@ import PaymentContext from '../contexts/PaymentContext'
 import React, { useState, useContext } from 'react'
 import WalletContext from '../contexts/WalletContext'
 import { NavigateStackContext } from '@depay/react-dialog-stack'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=>{
+export default (props) => {
 
   const { payment } = useContext(PaymentContext)
   const { wallet } = useContext(WalletContext)
   const { navigate } = useContext(NavigateStackContext)
-  const [ attemptedNetworkSwitch, setAttemptedNetworkSwitch ] = useState(false)
+  const [attemptedNetworkSwitch, setAttemptedNetworkSwitch] = useState(false)
   const blockchain = Blockchains.findByName(payment.route.blockchain)
+  const { t } = useTranslation()
 
-  const switchNetwork = ()=> {
+  const switchNetwork = () => {
     wallet.switchTo(payment.blockchain)
     navigate('back')
   }
 
-  return(
+  return (
     <Dialog
-      stacked={ true }
+      stacked={true}
       header={
         <div className="PaddingTopS PaddingLeftM PaddingRightM">
-          <h1 className="LineHeightL FontSizeL">Wrong Network</h1>
+          <h1 className="LineHeightL FontSizeL">{t('network.wrong')}</h1>
         </div>
       }
       body={
         <div className="PaddingTopS PaddingLeftM PaddingRightM PaddingBottomXS TextCenter">
           <div className="GraphicWrapper">
-            <img className="Graphic" src={ blockchain.logoWhiteBackground }/>
+            <img className="Graphic" src={blockchain.logoWhiteBackground} />
           </div>
-          <h1 className="LineHeightL Text FontSizeL PaddingTopS FontWeightBold">Connect to { blockchain.label }</h1>
+          <h1 className="LineHeightL Text FontSizeL PaddingTopS FontWeightBold">{t('network.connectTo', { blockchain: blockchain.label })}</h1>
           <div className="Text PaddingTopS PaddingBottomS PaddingLeftS PaddingRightS">
             <strong className="FontSizeM">
-              Please make sure you connect your wallet to the correct network before you try again!
+              {t('network.checkConnection')}
             </strong>
           </div>
         </div>
       }
       footer={
         <div className="PaddingTopXS PaddingRightM PaddingLeftM PaddingBottomM">
-          <button type="button" className="ButtonPrimary" onClick={ switchNetwork }>
-            Switch Network
+          <button type="button" className="ButtonPrimary" onClick={switchNetwork}>
+            {t('network.switch')}
           </button>
         </div>
       }

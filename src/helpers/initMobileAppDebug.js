@@ -6,11 +6,8 @@ const initMobileAppDebug = ()=> {
     script.onload = function() {
       // Initialize Eruda once the script is loaded
       window.eruda.init();
-      console.log('Eruda has been initialized.');
     };
     document.body.appendChild(script);
-  } else {
-    console.log('Eruda is already loaded.');
   }
 }
 

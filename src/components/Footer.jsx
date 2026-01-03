@@ -3,6 +3,7 @@ import ChangableAmountContext from '../contexts/ChangableAmountContext'
 import CheckmarkIcon from '../icons/CheckmarkIcon'
 import ChevronRightIcon from '../icons/ChevronRightIcon'
 import ClosableContext from '../contexts/ClosableContext'
+import ConfigurationContext from '../contexts/ConfigurationContext'
 import DigitalWalletIcon from '../icons/DigitalWalletIcon'
 import etaForConfirmations from '../helpers/etaForConfirmations'
 import link from '../helpers/link'
@@ -18,12 +19,13 @@ import WalletContext from '../contexts/WalletContext'
 import { Currency } from '@depay/local-currency'
 import { ethers } from 'ethers'
 import { NavigateStackContext } from '@depay/react-dialog-stack'
+import { useTranslation } from '../providers/TranslationProvider'
 
 const REQUIRES_APPROVAL_RESET = {
   'ethereum': ['0xdAC17F958D2ee523a2206206994597C13D831ec7'] // USDT on Ethereum
 }
 
-export default ()=>{
+export default () => {
   const { amount, amountsMissing } = useContext(ChangableAmountContext)
   const { transaction, synchronousTracking, asynchronousTracking, trackingInitialized, release, forwardTo, confirmationsRequired, confirmationsPassed } = useContext(PaymentTrackingContext)
   const { payment, paymentState, pay, approve, approvalTransaction, approvalSignature, approvalDone, approvalType, resetApproval, resetApprovalTransaction } = useContext(PaymentContext)
@@ -31,47 +33,42 @@ export default ()=>{
   const { navigate } = useContext(NavigateStackContext)
   const { close } = useContext(ClosableContext)
   const { account, wallet } = useContext(WalletContext)
-  const [ secondsLeft, setSecondsLeft ] = useState()
-  const [ secondsLeftCountdown, setSecondsLeftCountdown ] = useState(0)
-  const [ requiresApprovalReset, setRequiresApprovalReset ] = useState(false)
-  const [ showContactSupport, setShowContactSupport ] = useState(false)
+  const { action } = useContext(ConfigurationContext)
+  const [secondsLeft, setSecondsLeft] = useState()
+  const [secondsLeftCountdown, setSecondsLeftCountdown] = useState(0)
+  const [requiresApprovalReset, setRequiresApprovalReset] = useState(false)
+
   const throttledUpdateRouteWithNewPrice = throttle(updateRouteWithNewPrice, 2000)
-  const throttledPay = throttle(()=>pay(), 2000)
-  const throttledApprove = throttle(()=>approve(), 2000)
-  const throttledResetApproval = throttle(()=>resetApproval(), 2000)
+  const throttledPay = throttle(() => pay(), 2000)
+  const throttledApprove = throttle(() => approve(), 2000)
+  const throttledResetApproval = throttle(() => resetApproval(), 2000)
+  const { t } = useTranslation()
 
-  const showContactSupportNow = useEvent(()=>{
-    if(paymentState == 'validating') {
-      setShowContactSupport(true)
+  // Determinar la clave de traducción para el botón según el action
+  const getButtonText = () => {
+    if (action === 'recharge') {
+      return t('footer.recharge')
+    } else if (action === 'donation') {
+      return t('footer.donation') || t('footer.pay') // Fallback a pay si no existe donation
     }
-  })
+    return t('footer.pay')
+  }
 
-  useEffect(()=>{
-    if(confirmationsRequired) {
-      let interval = setInterval(()=>{
-        setSecondsLeftCountdown(secondsLeftCountdown+1)
+
+
+  useEffect(() => {
+    if (confirmationsRequired) {
+      let interval = setInterval(() => {
+        setSecondsLeftCountdown(secondsLeftCountdown + 1)
       }, 1000)
-      return ()=>{ clearInterval(interval) }
+      return () => { clearInterval(interval) }
     }
   }, [confirmationsRequired, secondsLeftCountdown])
 
-  useEffect(()=>{
-    let showContactSupportTimeout
-    
-    if(paymentState && paymentState == 'validating') {
-      showContactSupportTimeout = setTimeout(showContactSupportNow, 30000)
-    } else {
-      clearTimeout(showContactSupportTimeout)
-    }
 
-    return ()=>{ 
-      setShowContactSupport(false)
-      clearTimeout(showContactSupportTimeout)
-    }
-  }, [paymentState])
 
-  useEffect(()=>{
-    if(confirmationsPassed) {
+  useEffect(() => {
+    if (confirmationsPassed) {
       setSecondsLeft(
         etaForConfirmations(payment.route.blockchain, confirmationsRequired, confirmationsPassed)
         - secondsLeftCountdown
@@ -79,14 +76,14 @@ export default ()=>{
     }
   }, [confirmationsPassed, secondsLeftCountdown])
 
-  useEffect(()=>{
-    if(confirmationsPassed) {
+  useEffect(() => {
+    if (confirmationsPassed) {
       setSecondsLeftCountdown(0)
     }
   }, [confirmationsPassed])
 
-  useEffect(()=>{
-    if(
+  useEffect(() => {
+    if (
       payment?.route?.approvalRequired &&
       REQUIRES_APPROVAL_RESET[payment.route.blockchain] &&
       REQUIRES_APPROVAL_RESET[payment.route.blockchain].includes(payment.token) &&
@@ -100,15 +97,15 @@ export default ()=>{
     }
   }, [payment])
 
-  const actionIndicator = ()=>{
-    
-    if(!wallet) { return null }
+  const actionIndicator = () => {
 
-    if(
+    if (!wallet) { return null }
+
+    if (
       (paymentState == 'approve' && !approvalTransaction?.url) ||
       paymentState == 'paying'
     ) {
-      return(
+      return (
         <div className="PaddingBottomS PaddingTopXS">
           <div className="PaddingTopXS">
             <div className="ActionIndicator MarginBottomXS">
@@ -117,7 +114,7 @@ export default ()=>{
             </div>
             <div className="TextCenter PaddingTopXS">
               <span className="FontSizeL">
-                Confirm in your wallet
+                {t('footer.confirmInWallet')}
               </span>
             </div>
           </div>
@@ -125,12 +122,12 @@ export default ()=>{
       )
     }
 
-    return(null)
+    return (null)
   }
 
-  const steps = ()=>{
+  const steps = () => {
 
-    if(
+    if (
       (paymentState == 'initialized' && approvalTransaction?.url) ||
       paymentState == 'approve' ||
       paymentState == 'approving' ||
@@ -190,15 +187,15 @@ export default ()=>{
                 </div>
                 <div className="StepText">
                   {!permit2Done && !permit2Processing && (
-                    <span>Enable signature approval for {payment.symbol}</span>
+                    <span>{t('footer.enableSignature', { symbol: payment.symbol })}</span>
                   )}
                   {permit2Processing &&
                     <LoadingText>
-                      Enabling signature approval for {payment.symbol}
+                      {t('footer.enablingSignature', { symbol: payment.symbol })}
                     </LoadingText>
                   }
                   {permit2Done && !permit2Processing && (
-                    <span>Signature approval for {payment.symbol} enabled</span>
+                    <span>{t('footer.signatureEnabled', { symbol: payment.symbol })}</span>
                   )}
                 </div>
               </a>
@@ -218,7 +215,7 @@ export default ()=>{
                 <div className="StepIcon">
                   <div className="StepCircle" />
                 </div>
-                <div className="StepText">Approve spending {payment.symbol}</div>
+                <div className="StepText">{t('footer.approveSpending', { symbol: payment.symbol })}</div>
               </div>
               <div className="StepConnector" />
             </>
@@ -235,7 +232,7 @@ export default ()=>{
                 className={
                   'Step Card small transparent' +
                   (!approvalTransaction?.url ? ' disabled' : '') +
-                  (spendingActive || spendingProcessing  ? ' active' : '') +
+                  (spendingActive || spendingProcessing ? ' active' : '') +
                   (spendingDone ? ' done' : '')
                 }
               >
@@ -245,9 +242,9 @@ export default ()=>{
                   {!spendingProcessing && spendingDone && <CheckmarkIcon className="small" />}
                 </div>
                 <div className="StepText">
-                  {!spendingProcessing && !spendingDone && <span>Approve {payment.symbol} for spending</span>}
-                  {!spendingProcessing && spendingDone && <span>Approved {payment.symbol} for spending</span>}
-                  {spendingProcessing && <LoadingText>Approving {payment.symbol} for spending</LoadingText>}
+                  {!spendingProcessing && !spendingDone && <span>{t('footer.approveForSpending', { symbol: payment.symbol })}</span>}
+                  {!spendingProcessing && spendingDone && <span>{t('footer.approvedForSpending', { symbol: payment.symbol })}</span>}
+                  {spendingProcessing && <LoadingText>{t('footer.approving', { symbol: payment.symbol })}</LoadingText>}
                 </div>
               </a>
               <div className="StepConnector" />
@@ -259,7 +256,7 @@ export default ()=>{
                 <div className="StepIcon">
                   <CheckmarkIcon className="small" />
                 </div>
-                <div className="StepText">Spending {payment.symbol} approved</div>
+                <div className="StepText">{t('footer.spendingApproved', { symbol: payment.symbol })}</div>
               </div>
               <div className="StepConnector" />
             </>
@@ -288,8 +285,8 @@ export default ()=>{
                   {paymentProcessing && <div className="ActionIndicatorSpinner" />}
                 </div>
                 <div className="StepText">
-                  {paymentProcessing && <LoadingText>Performing payment</LoadingText>}
-                  {paymentDone && <span>Payment performed</span>}
+                  {paymentProcessing && <LoadingText>{t('footer.performingPayment')}</LoadingText>}
+                  {paymentDone && <span>{t('footer.paymentPerformed')}</span>}
                 </div>
               </a>
               <div className="StepConnector" />
@@ -309,7 +306,7 @@ export default ()=>{
                     <div className="StepCircle" />
                   )}
                 </div>
-                <div className="StepText">Perform payment</div>
+                <div className="StepText">{t('footer.performPayment')}</div>
               </div>
               <div className="StepConnector" />
             </>
@@ -323,7 +320,7 @@ export default ()=>{
                   <div className="ActionIndicatorSpinner" />
                 </div>
                 <div className="StepText">
-                  <LoadingText>Initializing tracking</LoadingText>
+                  <LoadingText>{t('footer.initializingTracking')}</LoadingText>
                 </div>
               </div>
               <div className="StepConnector" />
@@ -334,10 +331,10 @@ export default ()=>{
               href={
                 transaction
                   ? link({
-                      url: `https://scan.depay.com/tx/${transaction.blockchain}/${transaction.id}?sender=${payment.route.fromAddress}&receiver=${payment.route.toAddress}&deadline=${transaction.deadline}`,
-                      target: '_blank',
-                      wallet,
-                    })
+                    url: `https://scan.depay.com/tx/${transaction.blockchain}/${transaction.id}?sender=${payment.route.fromAddress}&receiver=${payment.route.toAddress}&deadline=${transaction.deadline}`,
+                    target: '_blank',
+                    wallet,
+                  })
                   : undefined
               }
               target="_blank"
@@ -355,8 +352,8 @@ export default ()=>{
                 )}
               </div>
               <div className="StepText">
-                {paymentState !== 'validating' && <span>Wait for payment confirmation</span>}
-                {paymentState === 'validating' && <LoadingText>Confirming payment</LoadingText>}
+                {paymentState !== 'validating' && <span>{t('footer.waitConfirmations')}</span>}
+                {paymentState === 'validating' && <LoadingText>{t('footer.confirmingPayment')}</LoadingText>}
                 {confirmationsRequired > 0 && secondsLeft > 0 && (
                   <span title={`${confirmationsPassed}/${confirmationsRequired} required confirmations`}>
                     {secondsLeft}s
@@ -370,10 +367,10 @@ export default ()=>{
               href={
                 transaction
                   ? link({
-                      url: `https://scan.depay.com/tx/${transaction.blockchain}/${transaction.id}?sender=${payment.route.fromAddress}&receiver=${payment.route.toAddress}&deadline=${transaction.deadline}`,
-                      target: '_blank',
-                      wallet,
-                    })
+                    url: `https://scan.depay.com/tx/${transaction.blockchain}/${transaction.id}?sender=${payment.route.fromAddress}&receiver=${payment.route.toAddress}&deadline=${transaction.deadline}`,
+                    target: '_blank',
+                    wallet,
+                  })
                   : undefined
               }
               target="_blank"
@@ -385,93 +382,80 @@ export default ()=>{
               <div className="StepIcon">
                 <CheckmarkIcon className="small" />
               </div>
-              <div className="StepText">Payment confirmed</div>
+              <div className="StepText">{t('footer.paymentConfirmed')}</div>
             </a>
           )}
-          {
-            showContactSupport && paymentState == 'validating' &&
-            <div className="Step Card small transparent disabled active">
-              <div className="StepIcon"></div>
-              <div className="StepText">
-              <span>Need help?&nbsp;</span>
-              <a
-                href={link({ url: `https://support.depay.com?wallet=${encodeURIComponent(wallet?.name)}&account=${account}&transaction=${transaction?.id}&query=${encodeURIComponent(`Problem with payment`)}`, target: '_blank', wallet })}
-                target="_blank"
-                className="Link"
-              >Contact support</a>
-              </div>
-            </div>
-          }
+
         </div>
       )
 
     }
   }
 
-  const mainAction = ()=>{
+  const mainAction = () => {
 
-    if(updatedRouteWithNewPrice) {
-      return(
+    if (updatedRouteWithNewPrice) {
+      return (
         <div>
           <div className="PaddingBottomXS">
             <div className="Info">
-              <strong>Exchange rate updated!</strong>
+              <strong>{t('footer.exchangeRateUpdated')}</strong>
             </div>
           </div>
-          <button type="button" className={"ButtonPrimary"} onClick={()=>{ throttledUpdateRouteWithNewPrice() }}>
-            Reload
+          <button type="button" className={"ButtonPrimary"} onClick={() => { throttledUpdateRouteWithNewPrice() }}>
+            {t('footer.reload')}
           </button>
         </div>
       )
-    } else if(requiresApprovalReset) {
-      if(paymentState == 'initialized') {
-        return(
+    } else if (requiresApprovalReset) {
+      if (paymentState == 'initialized') {
+        return (
           <div className="PaddingBottomXS">
-            <button type="button" className="ButtonPrimary" onClick={ throttledResetApproval } title={`Reset approval for ${payment.symbol}`}>
-              Reset { payment.symbol } approval
+            <button type="button" className="ButtonPrimary" onClick={throttledResetApproval} title={`Reset approval for ${payment.symbol}`}>
+              {t('footer.resetApproval', { symbol: payment.symbol })}
             </button>
           </div>
         )
       } else if (paymentState == 'resetting') {
-        return(
+        return (
           <div className="PaddingBottomXS">
-            <a className="ButtonPrimary" title="Resetting current approval - please wait" href={ link({ url: resetApprovalTransaction?.url, target: '_blank', wallet }) } target="_blank" rel="noopener noreferrer">
-              <LoadingText>Resetting</LoadingText>
+            <a className="ButtonPrimary" title="Resetting current approval - please wait" href={link({ url: resetApprovalTransaction?.url, target: '_blank', wallet })} target="_blank" rel="noopener noreferrer">
+              <LoadingText>{t('footer.resetting')}</LoadingText>
             </a>
           </div>
         )
       }
-    } else if((paymentState == 'initialized' || paymentState == 'approve' || paymentState == 'approving' || paymentState == 'approved' || paymentState == 'resetting') && payment.route) {
+    } else if ((paymentState == 'initialized' || paymentState == 'approve' || paymentState == 'approving' || paymentState == 'approved' || paymentState == 'resetting') && payment.route) {
       const approvalRequired = paymentState != 'approved' && payment?.route?.approvalRequired && wallet?.name != 'World App'
-      if(approvalRequired) {
-        if(
+      if (approvalRequired) {
+        if (
           paymentState == 'initialized' ||
           paymentState == 'approve' && approvalTransaction?.url
         ) {
-          return(
+          return (
             <div className="PaddingBottomXS PaddingTopXS">
 
-              { !approvalTransaction?.url && !approvalSignature &&
+              {!approvalTransaction?.url && !approvalSignature &&
                 <div className="PaddingBottomXS MarginBottomXS MarginTopNegativeS PaddingTopXS">
                   <div className="PaddingTopXS">
                     <button
-                      type="button" 
+                      type="button"
                       className="Card small transparent"
                       title="Change approval"
-                      onClick={ ()=>{
-                        if(paymentState != 'initialized') { return }
+                      onClick={() => {
+                        if (paymentState != 'initialized') { return }
                         navigate('ChangeApproval')
-                      } }
+                      }}
                     >
                       <div className="CardBody">
                         <div className="CardBodyWrapper">
                           <h4 className="CardTitle">
-                            Approval
+                            {t('footer.approval')}
                           </h4>
                         </div>
                       </div>
                       <div className="CardAction PaddingRightXS">
-                        <ChevronRightIcon className="small"/>
+                        <ChevronRightIcon className="small" />
                       </div>
                     </button>
                   </div>
@@ -479,58 +463,58 @@ export default ()=>{
               }
 
               <div>
-                <button type="button" className="ButtonPrimary" onClick={ throttledApprove }>
-                  Approve and pay
+                <button type="button" className="ButtonPrimary" onClick={throttledApprove}>
+                  {t('footer.approveAndPay')}
                 </button>
               </div>
             </div>
           )
         }
       } else {
-        return(
+        return (
           <button tabIndex={1} type="button" className="ButtonPrimary" onClick={throttledPay}>
-            Pay
+            {getButtonText()}
           </button>
         )
       }
     } else if (paymentState == 'paying') {
-      return(null)
+      return (null)
     } else if (paymentState == 'success') {
-      if(synchronousTracking == true) {
-        if(release) {
-          if(forwardTo) {
-            return(
-              <a className="ButtonPrimary" href={ forwardTo } rel="noopener noreferrer">
-                Continue
+      if (synchronousTracking == true) {
+        if (release) {
+          if (forwardTo) {
+            return (
+              <a className="ButtonPrimary" href={forwardTo} rel="noopener noreferrer">
+                {t('footer.continue')}
               </a>
             )
           } else {
-            return(
-              <button className="ButtonPrimary" onClick={ close }>
-                Done
+            return (
+              <button className="ButtonPrimary" onClick={close}>
+                {t('payment.done')}
               </button>
             )
           }
         } else {
-          return(null)
+          return (null)
         }
       } else if (asynchronousTracking == true && trackingInitialized == false) {
-        return(null)
+        return (null)
       } else {
-        return(
-          <button className="ButtonPrimary" onClick={ close }>
-            Done
+        return (
+          <button className="ButtonPrimary" onClick={close}>
+            {t('payment.done')}
           </button>
         )
       }
     }
   }
 
-  return(
+  return (
     <div>
-      { steps() }
-      { actionIndicator() }
-      { mainAction() }
+      {steps()}
+      {actionIndicator()}
+      {mainAction()}
     </div>
   )
 }

@@ -1,27 +1,30 @@
 import Dialog from '../components/Dialog'
 import React, { useContext } from 'react'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=>{
+export default (props) => {
 
-  return(
+  const { t } = useTranslation()
+
+  return (
     <Dialog
-      stacked={ true }
+      stacked={true}
       header={
         <div className="PaddingTopS PaddingLeftM PaddingRightM PaddingBottomS">
-          <h1 className="LineHeightL FontSizeL TextCenter">Payment options</h1>
+          <h1 className="LineHeightL FontSizeL TextCenter">{t('paymentOptions.title')}</h1>
         </div>
       }
       body={
         <div className="MaxHeight PaddingTopXS">
           <div className="PaddingLeftM PaddingRightM">
             <div className="Card Skeleton">
-              <div className="SkeletonBackground"/>
+              <div className="SkeletonBackground" />
             </div>
             <div className="Card Skeleton">
-              <div className="SkeletonBackground"/>
+              <div className="SkeletonBackground" />
             </div>
             <div className="Card Skeleton">
-              <div className="SkeletonBackground"/>
+              <div className="SkeletonBackground" />
             </div>
           </div>
         </div>
@@ -29,7 +32,7 @@ export default (props)=>{
       footer={
         <div className="PaddingBottomXS">
           <div className="TextCenter Opacity05 PaddingTopS PaddingBottomS">
-            <strong>Loading all payment options...</strong>
+            <strong>{t('paymentOptions.loading')}</strong>
           </div>
         </div>
       }

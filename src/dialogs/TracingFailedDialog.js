@@ -1,34 +1,45 @@
 import Dialog from '../components/Dialog'
 import ErrorGraphic from '../graphics/wallets/error'
+import ConfigurationContext from '../contexts/ConfigurationContext'
 import React, { useContext } from 'react'
+import supportUrl from '../helpers/supportUrl'
 import { NavigateStackContext } from '@depay/react-dialog-stack'
 import WalletContext from '../contexts/WalletContext'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=> {
+export default (props) => {
 
   const { navigate } = useContext(NavigateStackContext)
   const { account } = useContext(WalletContext)
+  const configuration = useContext(ConfigurationContext)
+  const { t } = useTranslation()
 
-  const tryAgain = ()=>{
-    if(props.tryAgain){
+  const tryAgain = () => {
+    if (props.tryAgain) {
       props.tryAgain()
     } else {
       navigate('back')
     }
   }
 
-  return(
+  return (
     <Dialog
-      stacked={ false }
+      stacked={false}
       header={
         <div className="PaddingTopS PaddingLeftM PaddingRightM TextLeft">
           <div className="PaddingRightM">
-            <a 
-              href={`https://support.depay.com?account=${account}&query=${encodeURIComponent(`Tracing payment failed`)}`}
+            <a
+              href={supportUrl({
+                configuration,
+                params: {
+                  account,
+                  query: 'Tracing payment failed'
+                }
+              })}
               target="_blank"
               className="Card secondary small inlineBlock"
             >
-              Contact support
+              {t('menu.contactSupport')}
             </a>
           </div>
         </div>
@@ -36,15 +47,15 @@ export default (props)=> {
       body={
         <div className="TextCenter">
           <div className="GraphicWrapper">
-            <ErrorGraphic/>
+            <ErrorGraphic />
           </div>
-          <h1 className="LineHeightL Text FontSizeL PaddingTopS FontWeightBold">Tracking payment failed</h1>
+          <h1 className="LineHeightL Text FontSizeL PaddingTopS FontWeightBold">{t('tracing.failed')}</h1>
           <div className="Text PaddingTopS PaddingBottomS PaddingLeftS PaddingRightS">
             <strong className="FontSizeM">
-              Please ensure you are connected to the internet, then click "Try again".
+              {t('tracking.checkInternet')}
             </strong>
             <div className="PaddingTopS">
-              <span>If this keeps happening, please report it.</span>
+              <span>{t('tracking.reportIt')}</span>
             </div>
           </div>
         </div>
@@ -52,7 +63,7 @@ export default (props)=> {
       footer={
         <div className="PaddingTopXS PaddingRightM PaddingLeftM PaddingBottomM">
           <button className='ButtonPrimary' onClick={tryAgain}>
-            Try again
+            {t('payment.tryAgain')}
           </button>
         </div>
       }

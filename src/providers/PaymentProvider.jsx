@@ -152,7 +152,6 @@ export default (props)=>{
           track(sentTransaction, currentBlock, payment.route, deadline)
         })
         .catch((error)=>{
-          console.log('error', error)
           setClosable(true)
           setUpdatable(true)
           if(approvalTransaction || approvalSignature || passedSignature) {
@@ -165,7 +164,6 @@ export default (props)=>{
           }
         })
     }).catch((e)=>{
-      console.log(e)
       setPaymentState('initialized')
       setClosable(true)
       setUpdatable(true)
@@ -199,7 +197,6 @@ export default (props)=>{
       }
     }))
       .catch((error)=>{
-        console.log('error', error)
         if(error?.code == 'WRONG_NETWORK' || error?.code == 'NOT_SUPPORTED') {
           navigate('WrongNetwork')
         }
@@ -233,7 +230,6 @@ export default (props)=>{
           pay(_approvalSignatureData, signature)
         }
       }).catch((e)=>{
-        console.log('ERROR', e)
         if(approvalTransaction?.url) {
           setPaymentState('approve')
         } else {
@@ -299,8 +295,17 @@ export default (props)=>{
     }
   }, [trackingInitialized, paymentState])
 
+  // Ref para rastrear el último fromAmount procesado y evitar actualizaciones innecesarias
+  const lastProcessedFromAmountRef = useRef()
+  
   const debouncedSetPayment = useCallback(debounce((selectedRoute)=>{
     if(selectedRoute) {
+      const currentFromAmount = selectedRoute?.fromAmount?.toString()
+      // Solo actualizar si el fromAmount realmente cambió
+      if (lastProcessedFromAmountRef.current === currentFromAmount) {
+        return
+      }
+      
       // reset approval status if selectedRoute has been changed
       setApprovalTransaction()
       setApprovalSignature()
@@ -311,21 +316,28 @@ export default (props)=>{
         fromToken.symbol(),
         fromToken.readable(selectedRoute.fromAmount)
       ]).then(([name, symbol, amount])=>{
-        setPayment({
+        const newPayment = {
           blockchain: Blockchains[selectedRoute.blockchain],
           route: selectedRoute,
           token: fromToken.address,
           name,
           symbol: symbol.toUpperCase(),
           amount
-        })
+        }
+        setPayment(newPayment)
+        lastProcessedFromAmountRef.current = currentFromAmount
       }).catch(setError)
+    } else {
+      if (lastProcessedFromAmountRef.current !== undefined) {
+        setPayment(undefined)
+        lastProcessedFromAmountRef.current = undefined
+      }
     }
-  }, 100), [])
+  }, 200), [])
 
   useEffect(()=>{
     debouncedSetPayment(selectedRoute)
-  }, [selectedRoute])
+  }, [selectedRoute?.fromAmount, debouncedSetPayment, selectedRoute])
 
   useEffect(()=>{
     if(allRoutes && allRoutes.length == 0) {

@@ -23,38 +23,41 @@ import platformForWallet from '../helpers/platformForWallet'
 import React, { useState, useEffect, useContext, useRef, useMemo } from 'react'
 import safeUniversalUrl from '../helpers/safeUniversalUrl'
 import SelectWalletList from '../components/SelectWalletList'
+import supportUrl from '../helpers/supportUrl'
 import { get as getPreviouslyConnectedWallet } from '../helpers/previouslyConnectedWallet'
 import { NavigateStackContext } from '@depay/react-dialog-stack'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=>{
+export default (props) => {
 
-  const [ searchTerm, setSearchTerm ] = useState('')
-  const [ detectedWallets, setDetectedWallets ] = useState([])
-  const [ previouslyConnectedWallet, setPreviouslyConnectedWallet ] = useState()
-  const [ showDropDown, setShowDropDown ] = useState(false)
-  const [ dialogAnimationFinished, setDialogAnimationFinished ] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [detectedWallets, setDetectedWallets] = useState([])
+  const [previouslyConnectedWallet, setPreviouslyConnectedWallet] = useState()
+  const [showDropDown, setShowDropDown] = useState(false)
+  const [dialogAnimationFinished, setDialogAnimationFinished] = useState(false)
   const { wallets: walletsConfiguration } = useContext(ConfigurationContext)
   const searchElement = useRef()
   const listElement = useRef()
   const { navigate } = useContext(NavigateStackContext)
+  const { t } = useTranslation()
 
   let allowList = walletsConfiguration?.allow || walletsConfiguration?.whitelist
   let allWallets
-  if(walletsConfiguration?.sort || allowList) {
-    allWallets = useMemo(()=>{
+  if (walletsConfiguration?.sort || allowList) {
+    allWallets = useMemo(() => {
       let adjustedWallets = [...allWalletsOriginal]
 
-      if(walletsConfiguration?.sort) {
-        walletsConfiguration.sort.forEach((sortedWallet, newIndex)=>{
-          let currentListIndex = adjustedWallets.findIndex((unsortedWallet)=>unsortedWallet.name === sortedWallet)
-          if(currentListIndex > -1) {
+      if (walletsConfiguration?.sort) {
+        walletsConfiguration.sort.forEach((sortedWallet, newIndex) => {
+          let currentListIndex = adjustedWallets.findIndex((unsortedWallet) => unsortedWallet.name === sortedWallet)
+          if (currentListIndex > -1) {
             adjustedWallets.splice(newIndex, 0, adjustedWallets.splice(currentListIndex, 1)[0])
           }
         })
       }
 
-      if(allowList) {
-        adjustedWallets = adjustedWallets.filter((wallet)=>allowList.indexOf(wallet.name) > -1)
+      if (allowList) {
+        adjustedWallets = adjustedWallets.filter((wallet) => allowList.indexOf(wallet.name) > -1)
       }
 
       return adjustedWallets
@@ -63,37 +66,37 @@ export default (props)=>{
     allWallets = allWalletsOriginal
   }
 
-  const onClickWallet = async(walletMetaData, wallet)=>{
-    if(walletMetaData.via == 'detected') {
-      if(walletMetaData.connectionType == 'app') {
-        wallet.account().then((account)=>{
-          if(account){
+  const onClickWallet = async (walletMetaData, wallet) => {
+    if (walletMetaData.via == 'detected') {
+      if (walletMetaData.connectionType == 'app') {
+        wallet.account().then((account) => {
+          if (account) {
             props.resolve(account, wallet)
           }
         })
         props.setWallet(walletMetaData)
         navigate('ConnectWallet')
-      } else if(walletMetaData.connectionType == 'extension') {
+      } else if (walletMetaData.connectionType == 'extension') {
         props.setWallet(walletMetaData)
         props.connectExtension(walletMetaData)
         navigate('ConnectWallet')
       }
-    } else if(isMobile()) {
+    } else if (isMobile()) {
       const platform = platformForWallet(walletMetaData)
       let extensionIsAvailable
-      if(walletMetaData.extension) {
+      if (walletMetaData.extension) {
         extensionIsAvailable = await wallets[walletMetaData.extension].isAvailable()
       } else if (walletMetaData.extensions) {
-        extensionIsAvailable = (await Promise.all(walletMetaData.extensions.map((extension)=>wallets[extension].isAvailable()))).filter(Boolean).length > 0
+        extensionIsAvailable = (await Promise.all(walletMetaData.extensions.map((extension) => wallets[extension].isAvailable()))).filter(Boolean).length > 0
       }
-      if(platform && platform.open) {
-        if(!extensionIsAvailable) {
+      if (platform && platform.open) {
+        if (!extensionIsAvailable) {
           props.openInApp(walletMetaData)
         }
         props.setWallet(walletMetaData)
         navigate('ConnectWallet')
       } else {
-        if(!extensionIsAvailable) {
+        if (!extensionIsAvailable) {
           props.connectViaRedirect(walletMetaData)
         }
         props.setWallet(walletMetaData)
@@ -107,7 +110,7 @@ export default (props)=>{
 
   useEffect(() => {
 
-    const focusNextElement = (event)=> {
+    const focusNextElement = (event) => {
       const focusable = Array.from(listElement.current.querySelectorAll(
         'button.Card'
       ));
@@ -115,14 +118,14 @@ export default (props)=>{
       const index = focusable.indexOf(listElement.current.querySelector(':focus'));
       if (index > -1 && index < focusable.length - 1) {
         focusable[index + 1].focus()
-      } else if(index < focusable.length - 1) {
+      } else if (index < focusable.length - 1) {
         focusable[0].focus()
         event.preventDefault()
         return false
       }
     }
 
-    const focusPrevElement = (event)=> {
+    const focusPrevElement = (event) => {
       const focusable = Array.from(listElement.current.querySelectorAll(
         'button.Card'
       ));
@@ -149,41 +152,41 @@ export default (props)=>{
     }
   }, [])
 
-  useEffect(()=>{
-    if(allWallets.length === 1) {
+  useEffect(() => {
+    if (allWallets.length === 1) {
       onClickWallet(allWallets[0])
     }
   }, [allWallets])
 
-  useEffect(()=>{
-    if(detectedWallets.length == 1) {
-      const wallet = allWallets.find((wallet)=>wallet.name === detectedWallets[0].info.name)
-      if(wallet.autoSelect) {
+  useEffect(() => {
+    if (detectedWallets.length == 1) {
+      const wallet = allWallets.find((wallet) => wallet.name === detectedWallets[0].info.name)
+      if (wallet.autoSelect) {
         onClickWallet(wallet)
       }
     }
   }, [detectedWallets])
 
-  useEffect(()=>{
+  useEffect(() => {
     let wallets = []
     getWallets({
-      drip: (wallet)=>{
+      drip: (wallet) => {
         wallets = wallets.concat(wallet)
-        
-        if(walletsConfiguration?.sort || allowList) {
+
+        if (walletsConfiguration?.sort || allowList) {
           let adjustedWallets = [...wallets]
 
-          if(walletsConfiguration?.sort) {
-            walletsConfiguration.sort.forEach((sortedWallet, newIndex)=>{
-              let currentListIndex = adjustedWallets.findIndex((unsortedWallet)=>unsortedWallet?.info?.name === sortedWallet)
-              if(currentListIndex > -1) {
+          if (walletsConfiguration?.sort) {
+            walletsConfiguration.sort.forEach((sortedWallet, newIndex) => {
+              let currentListIndex = adjustedWallets.findIndex((unsortedWallet) => unsortedWallet?.info?.name === sortedWallet)
+              if (currentListIndex > -1) {
                 adjustedWallets.splice(newIndex, 0, adjustedWallets.splice(currentListIndex, 1)[0])
               }
             })
           }
 
-          if(allowList) {
-            adjustedWallets = adjustedWallets.filter((wallet)=>allowList.indexOf(wallet?.info?.name) > -1)
+          if (allowList) {
+            adjustedWallets = adjustedWallets.filter((wallet) => allowList.indexOf(wallet?.info?.name) > -1)
           }
 
           setDetectedWallets(adjustedWallets)
@@ -194,17 +197,17 @@ export default (props)=>{
     })
 
     let previouslyConnectedWalletName = getPreviouslyConnectedWallet()
-    let previouslyConnectedWallet = allWallets.find((wallet)=>wallet.name == previouslyConnectedWalletName) || allWallets.find((wallet)=>wallet.name == previouslyConnectedWalletName)
-    if(previouslyConnectedWallet) {
+    let previouslyConnectedWallet = allWallets.find((wallet) => wallet.name == previouslyConnectedWalletName) || allWallets.find((wallet) => wallet.name == previouslyConnectedWalletName)
+    if (previouslyConnectedWallet) {
       setPreviouslyConnectedWallet(previouslyConnectedWallet)
     }
   }, [])
 
-  useEffect(()=>{
-    setTimeout(()=>{
+  useEffect(() => {
+    setTimeout(() => {
       setDialogAnimationFinished(true)
-      if(!isMobile()) {
-        if(searchElement.current){
+      if (!isMobile()) {
+        if (searchElement.current) {
           searchElement.current.click()
           searchElement.current.focus()
         }
@@ -212,44 +215,44 @@ export default (props)=>{
     }, 200)
   }, [])
 
-  return(
+  return (
     <Dialog
       header={
         <div>
           <div className="PaddingTopS PaddingLeftM PaddingRightM TextLeft PaddingBottomS">
-            <h1 className="LineHeightL FontSizeL">Select a wallet</h1>
+            <h1 className="LineHeightL FontSizeL">{t('wallet.select')}</h1>
           </div>
-          { ((detectedWallets && detectedWallets.length > 0) || previouslyConnectedWallet) &&
+          {((detectedWallets && detectedWallets.length > 0) || previouslyConnectedWallet) &&
             <div className="PaddingBottomXS PaddingLeftS PaddingRightS">
               {
-                detectedWallets.filter((wallet, index, array)=>{
+                detectedWallets.filter((wallet, index, array) => {
                   return array.findIndex(target => (target?.info?.name === wallet?.info?.name)) === index
-                }).map((wallet, index)=>{
-                  const walletMetaData = allWallets.find((walletFromList)=>walletFromList.name === (wallet.info ? wallet.info.name : wallet.name))
-                  if(!walletMetaData){ return null }
+                }).map((wallet, index) => {
+                  const walletMetaData = allWallets.find((walletFromList) => walletFromList.name === (wallet.info ? wallet.info.name : wallet.name))
+                  if (!walletMetaData) { return null }
                   let connectionType = 'app'
-                  if(wallet && wallet.constructor && ![wallets.WalletConnectV1, wallets.WalletConnectV2, wallets.WalletLink].includes(wallet.constructor)) {
+                  if (wallet && wallet.constructor && ![wallets.WalletConnectV1, wallets.WalletConnectV2, wallets.WalletLink].includes(wallet.constructor)) {
                     connectionType = 'extension'
                   }
-                  return(
+                  return (
                     <div key={index} className="PaddingBottomXS">
                       <button
                         type="button"
                         className="Card small"
-                        title={`Connect ${walletMetaData.name}`}
-                        onClick={ ()=>{
+                        title={t('wallet.connect', { wallet: walletMetaData.name })}
+                        onClick={() => {
                           onClickWallet({ ...walletMetaData, via: 'detected', connectionType }, wallet)
                         }}
                       >
                         <div className="CardImage">
-                          <img className="transparent" src={walletMetaData.logo} className="WalletLogoS"/>
+                          <img className="transparent WalletLogoS" src={walletMetaData.logo} />
                         </div>
                         <div className="CardBody">
                           <div className="CardBodyWrapper PaddingLeftXS LineHeightXS">
                             <div className="CardText FontWeightMedium">
-                              { walletMetaData.name }
+                              {walletMetaData.name}
                             </div>
-                            <div className="TextColorSuccess"><span className="TextColorSuccess" style={{ fontSize: '70%', top: '-1px', position: 'relative' }}>●</span> Detected</div>
+                            <div className="TextColorSuccess"><span className="TextColorSuccess" style={{ fontSize: '70%', top: '-1px', position: 'relative' }}>●</span> {t('wallet.detected')}</div>
                           </div>
                         </div>
                       </button>
@@ -258,25 +261,25 @@ export default (props)=>{
                 })
               }
               {
-                previouslyConnectedWallet && !detectedWallets.find((wallet)=>previouslyConnectedWallet.name === (wallet.info ? wallet.info.name : wallet.name)) &&
+                previouslyConnectedWallet && !detectedWallets.find((wallet) => previouslyConnectedWallet.name === (wallet.info ? wallet.info.name : wallet.name)) &&
                 <div className="PaddingBottomXS">
                   <button
                     type="button"
                     className="Card small"
-                    title={`Connect ${previouslyConnectedWallet.name}`}
-                    onClick={ ()=>{
+                    title={t('wallet.connect', { wallet: previouslyConnectedWallet.name })}
+                    onClick={() => {
                       onClickWallet({ ...previouslyConnectedWallet, via: 'previouslyConnected', connectionType: 'app' })
                     }}
                   >
                     <div className="CardImage">
-                      <img className="transparent" src={previouslyConnectedWallet.logo} className="WalletLogoS"/>
+                      <img className="transparent WalletLogoS" src={previouslyConnectedWallet.logo} />
                     </div>
                     <div className="CardBody">
                       <div className="CardBodyWrapper PaddingLeftXS LineHeightXS">
                         <div className="CardText FontWeightMedium">
-                          { previouslyConnectedWallet.name }
+                          {previouslyConnectedWallet.name}
                         </div>
-                        <div className="Opacity05"><span style={{ fontSize: '70%', top: '-1px', position: 'relative' }}>●</span> Used previously</div>
+                        <div className="Opacity05"><span style={{ fontSize: '70%', top: '-1px', position: 'relative' }}>●</span> {t('wallet.usedPreviously')}</div>
                       </div>
                     </div>
                   </button>
@@ -286,8 +289,8 @@ export default (props)=>{
           }
           <div className="PaddingBottomXS PaddingLeftS PaddingRightS PaddingTopXS">
             <div className="Row">
-              { allWallets.length > 4 &&
-                <input className="Search" value={ searchTerm } onChange={ (event)=>{ setSearchTerm(event.target.value) } } placeholder="Search by name" ref={ searchElement }/>
+              {allWallets.length > 4 &&
+                <input className="Search" value={searchTerm} onChange={(event) => { setSearchTerm(event.target.value) }} placeholder={t('wallet.search')} ref={searchElement} />
               }
             </div>
           </div>
@@ -295,35 +298,49 @@ export default (props)=>{
       }
       alternativeHeaderAction={
         <span className="DropDownWrapper">
-          <button type="button" onClick={ ()=>setShowDropDown(!showDropDown) } className="ButtonCircular" title="More options">
-            <MenuIcon/>
+          <button type="button" onClick={() => setShowDropDown(!showDropDown)} className="ButtonCircular" title="More options">
+            <MenuIcon />
           </button>
-          { showDropDown && <DropDown hide={()=>setShowDropDown(false)}
+          {showDropDown && <DropDown hide={() => setShowDropDown(false)}
             items={[
-              { label: "What is a wallet?", action: ()=>{ navigate('WhatIsAWallet') } },
-              { label: "Wallet missing?", action: ()=>{ window.open(`https://support.depay.com?query=${encodeURIComponent(`Can you add support for the following wallet`)}`, '_blank') } },
-              { label: "Problems connecting?", action: ()=>{ window.open(`https://support.depay.com?query=${encodeURIComponent(`I have problems connecting my wallet`)}`, '_blank') } },
+              { label: t('wallet.whatIs'), action: () => { navigate('WhatIsAWallet') } },
+              {
+                label: t('wallet.missing'), action: () => {
+                  window.open(supportUrl({
+                    configuration,
+                    params: { query: 'Can you add support for the following wallet' }
+                  }), '_blank')
+                }
+              },
+              {
+                label: t('wallet.problemsRequest'), action: () => {
+                  window.open(supportUrl({
+                    configuration,
+                    params: { query: 'I have problems connecting my wallet' }
+                  }), '_blank')
+                }
+              },
             ]}
-          /> }
+          />}
         </span>
       }
-      bodyClassName={ "PaddingBottomXS" }
+      bodyClassName={"PaddingBottomXS"}
       body={
-        <div className="PaddingTopXS" ref={ listElement }>
-          { dialogAnimationFinished &&
-            <SelectWalletList setWallet={ props.setWallet } searchTerm={ searchTerm } onClickWallet={ onClickWallet }/>
+        <div className="PaddingTopXS" ref={listElement}>
+          {dialogAnimationFinished &&
+            <SelectWalletList setWallet={props.setWallet} searchTerm={searchTerm} onClickWallet={onClickWallet} />
           }
-          { !dialogAnimationFinished && // placeholder
+          {!dialogAnimationFinished && // placeholder
             <div className="ScrollHeightM DialogBody PaddingBottomS PaddingLeftS PaddingRightS">
-              <div style={{ height: "60px" }}><div className="Skeleton Card small" style={{ height: "57px" }}><div className="SkeletonBackground"/></div></div>
-              <div style={{ height: "60px" }}><div className="Skeleton Card small" style={{ height: "57px" }}><div className="SkeletonBackground"/></div></div>
-              <div style={{ height: "60px" }}><div className="Skeleton Card small" style={{ height: "57px" }}><div className="SkeletonBackground"/></div></div>
-              <div style={{ height: "60px" }}><div className="Skeleton Card small" style={{ height: "57px" }}><div className="SkeletonBackground"/></div></div>
+              <div style={{ height: "60px" }}><div className="Skeleton Card small" style={{ height: "57px" }}><div className="SkeletonBackground" /></div></div>
+              <div style={{ height: "60px" }}><div className="Skeleton Card small" style={{ height: "57px" }}><div className="SkeletonBackground" /></div></div>
+              <div style={{ height: "60px" }}><div className="Skeleton Card small" style={{ height: "57px" }}><div className="SkeletonBackground" /></div></div>
+              <div style={{ height: "60px" }}><div className="Skeleton Card small" style={{ height: "57px" }}><div className="SkeletonBackground" /></div></div>
             </div>
           }
         </div>
       }
-      footer={ false }
+      footer={false}
     />
   )
 }

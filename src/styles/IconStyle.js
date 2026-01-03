@@ -1,9 +1,9 @@
-export default (style)=>{
-  return(`
+export default (style) => {
+  return (`
 
     .Icon {
-      fill: ${style.colors.text};
-      stroke: ${style.colors.text};
+      fill: ${style.colors.icons};
+      stroke: ${style.colors.icons};
     }
 
     .ChevronLeft, .ChevronRight {

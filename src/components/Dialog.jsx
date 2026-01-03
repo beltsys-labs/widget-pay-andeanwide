@@ -3,41 +3,43 @@ import ClosableContext from '../contexts/ClosableContext'
 import CloseIcon from '../icons/CloseIcon'
 import React, { useContext } from 'react'
 import { NavigateStackContext } from '@depay/react-dialog-stack'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=>{
+export default (props) => {
 
   const { navigate } = useContext(NavigateStackContext)
   const { close, closable } = useContext(ClosableContext)
+  const { t } = useTranslation()
 
-  return(
+  return (
     <div className={["Dialog", props.className].join(' ')}>
-      
+
       <div className={["DialogHeader", props.stacked ? 'TextCenter' : ''].join(' ')}>
-        { props.stacked &&
+        {props.stacked &&
           <div className="DialogHeaderActionLeft PaddingTopS PaddingLeftS PaddingRightS">
-            <button type="button" onClick={ ()=>navigate('back') } className="ButtonCircular" title="Go back">
-              <ChevronLeftIcon/>
+            <button type="button" onClick={() => navigate('back')} className="ButtonCircular" title={t('dialog.goBack')}>
+              <ChevronLeftIcon />
             </button>
           </div>
         }
-        { closable && props.closable !== false &&
+        {closable && props.closable !== false &&
           <div className="DialogHeaderActionRight PaddingTopS PaddingLeftS PaddingRightS">
-            { props.alternativeHeaderAction }
-            <button type="button" onClick={ close } className="ButtonCircular" title="Close dialog">
-              <CloseIcon/>
+            {props.alternativeHeaderAction}
+            <button type="button" onClick={close} className="ButtonCircular" title={t('dialog.close')}>
+              <CloseIcon />
             </button>
           </div>
         }
-        { props.header }
+        {props.header}
       </div>
 
-      <div ref={ props.bodyRef } className={["DialogBody", props.bodyClassName].join(' ')}>
-        { props.body }
+      <div ref={props.bodyRef} className={["DialogBody", props.bodyClassName].join(' ')}>
+        {props.body}
       </div>
 
-      { props.footer !== false &&
+      {props.footer !== false &&
         <div className="DialogFooter">
-          { props.footer }
+          {props.footer}
         </div>
       }
     </div>

@@ -6,6 +6,7 @@ import NavigateContext from '../contexts/NavigateContext'
 import PaymentFailedDialog from '../dialogs/PaymentFailedDialog'
 import PaymentOverviewDialog from '../dialogs/PaymentOverviewDialog'
 import React, { useContext, useEffect, useState } from 'react'
+import SelectCurrencyDialog from '../dialogs/SelectCurrencyDialog'
 import SolanaPayDialog from '../dialogs/SolanaPayDialog'
 import TracingFailedDialog from '../dialogs/TracingFailedDialog'
 import TrackingFailedDialog from '../dialogs/TrackingFailedDialog'
@@ -14,42 +15,43 @@ import WalletContext from '../contexts/WalletContext'
 import WrongNetworkDialog from '../dialogs/WrongNetworkDialog'
 import { ReactDialogStack } from '@depay/react-dialog-stack'
 
-export default (props)=>{
+export default (props) => {
 
   const { open, close } = useContext(ClosableContext)
   const { setNavigator } = useContext(NavigateContext)
   const { account, solanaPayWallet } = useContext(WalletContext)
-  const [ navigator, setLocalNavigator ] = useState()
+  const [navigator, setLocalNavigator] = useState()
 
   useEffect(() => {
-    if(navigator && !solanaPayWallet) {
+    if (navigator && !solanaPayWallet) {
       navigator.set(['PaymentOverview'])
     }
   }, [account, solanaPayWallet])
 
-  return(
+  return (
     <ReactDialogStack
-      setNavigator={(navigator)=>{
+      setNavigator={(navigator) => {
         setLocalNavigator(navigator)
         setNavigator(navigator)
       }}
-      open={ open }
-      close={ close }
+      open={open}
+      close={close}
       start={solanaPayWallet ? 'SolanaPay' : 'PaymentOverview'}
-      container={ props.container }
-      document={ props.document }
+      container={props.container}
+      document={props.document}
       stacked={true}
       dialogs={{
-        PaymentOverview: <PaymentOverviewDialog/>,
-        SolanaPay: <SolanaPayDialog/>,
-        ChangeAmount: <ChangeAmountDialog/>,
-        ChangeApproval: <ChangeApprovalDialog/>,
-        ChangePayment: <ChangePaymentDialog/>,
-        PaymentFailed: <PaymentFailedDialog/>,
-        WrongNetwork: <WrongNetworkDialog/>,
-        TrackingFailed: <TrackingFailedDialog/>,
-        TracingFailed: <TracingFailedDialog/>,
-        ValidationFailed: <ValidationFailedDialog/>,
+        PaymentOverview: <PaymentOverviewDialog />,
+        SolanaPay: <SolanaPayDialog />,
+        ChangeAmount: <ChangeAmountDialog />,
+        ChangeApproval: <ChangeApprovalDialog />,
+        ChangePayment: <ChangePaymentDialog />,
+        SelectCurrency: <SelectCurrencyDialog />,
+        PaymentFailed: <PaymentFailedDialog />,
+        WrongNetwork: <WrongNetworkDialog />,
+        TrackingFailed: <TrackingFailedDialog />,
+        TracingFailed: <TracingFailedDialog />,
+        ValidationFailed: <ValidationFailedDialog />,
       }}
     />
   )

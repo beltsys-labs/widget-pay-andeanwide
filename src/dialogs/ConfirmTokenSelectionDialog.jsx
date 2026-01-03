@@ -19,8 +19,9 @@ import Dialog from '../components/Dialog'
 import msToTime from '../helpers/msToTime'
 import React, { useState, useContext } from 'react'
 import SelectionContext from '../contexts/SelectionContext'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=> {
+export default (props) => {
 
   const { selection } = useContext(SelectionContext)
   const { setOpen } = useContext(ClosableContext)
@@ -28,31 +29,33 @@ export default (props)=> {
   const address = token.address || token.external_id
   const logo = token.logo || token.image
   const blockchain = Blockchains.findByName(token.blockchain)
+  const { t } = useTranslation()
+
   let age = token.first_transfer ? msToTime(new Date() - new Date(token.first_transfer)) : undefined
-  if(age) {
+  if (age) {
     age = [
-      ((age.year && age.year >= 1) ? (age.year >= 2 ? `${age.year} years` : `1 year`) : undefined ),
-      ((age.month && age.month >= 1) ? (age.month >= 2 ? `${age.month} months` : `1 month`) : undefined ),
-      ((age.day && age.day >= 1 && age.month <=1 && age.year <1) ? (age.day >= 2 ? `${age.day} days !!!` : `1 day !!!`) : undefined )
+      ((age.year && age.year >= 1) ? (age.year >= 2 ? t('time.years', { count: age.year }) : t('time.year')) : undefined),
+      ((age.month && age.month >= 1) ? (age.month >= 2 ? t('time.months', { count: age.month }) : t('time.month')) : undefined),
+      ((age.day && age.day >= 1 && age.month <= 1 && age.year < 1) ? (age.day >= 2 ? t('time.days', { count: age.day }) : t('time.day')) : undefined)
     ].filter(n => n).join(' ')
   }
 
   let holders = token.unique_senders ? token.unique_senders : undefined
-  if(holders) {
-    if(holders > 1000000) {
-      holders = "Millions"
+  if (holders) {
+    if (holders > 1000000) {
+      holders = t("holders.millions")
     } else if (holders > 100000) {
-      holders = "Hundreds of Thousands"
+      holders = t("holders.hundredsThousands")
     } else if (holders > 2000) {
-      holders = "Thousands"
+      holders = t("holders.thousands")
     } else if (holders > 100) {
-      holders = "Hundreds"
+      holders = t("holders.hundreds")
     } else {
-      holders = "Only a Few!!!"
+      holders = t("holders.few")
     }
   }
 
-  const onClickConfirm = ()=>{
+  const onClickConfirm = () => {
     setOpen(false)
     props.resolve({
       blockchain: token.blockchain,
@@ -66,25 +69,25 @@ export default (props)=> {
     setTimeout(props.unmount, 300)
   }
 
-  return(
+  return (
     <Dialog
       header={
         <div className="PaddingTopS PaddingLeftM PaddingRightM">
           <div>
-            <h1 className="LineHeightL FontSizeL">Confirm Selection</h1>
+            <h1 className="LineHeightL FontSizeL">{t('confirm.selection')}</h1>
           </div>
         </div>
       }
-      stacked={ true }
+      stacked={true}
       body={
         <div className="PaddingTopS PaddingLeftM PaddingRightM">
           <div className="TokenImage medium TextCenter">
-            { logo && <img src={ logo }/> }
-            { !logo && <TokenImage blockchain={ token.blockchain } address={ address }/> }
+            {logo && <img src={logo} />}
+            {!logo && <TokenImage blockchain={token.blockchain} address={address} />}
           </div>
           <div className="PaddingTopS TextCenter">
             <div className="Alert FontSizeS">
-              <strong>Review this information</strong>
+              <strong>{t('confirm.review')}</strong>
             </div>
           </div>
           <div className="PaddingTopXS">
@@ -92,57 +95,57 @@ export default (props)=> {
               <tbody>
                 <tr>
                   <td>
-                    <div className='TableSubTitle'>Address</div>
+                    <div className='TableSubTitle'>{t('confirm.address')}</div>
                   </td>
                   <td>
                     <div>
-                      <a className="Link" title={ address } href={ blockchain.explorerUrlFor({ token: address }) } target="_blank" rel="noopener noreferrer">
-                        { addressEllipsis(address, 8) }
+                      <a className="Link" title={address} href={blockchain.explorerUrlFor({ token: address })} target="_blank" rel="noopener noreferrer">
+                        {addressEllipsis(address, 8)}
                       </a>
                     </div>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <div className='TableSubTitle'>Blockchain</div>
+                    <div className='TableSubTitle'>{t('confirm.blockchain')}</div>
                   </td>
                   <td>
-                    <div>{ blockchain.label }</div>
+                    <div>{blockchain.label}</div>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <div className='TableSubTitle'>Symbol</div>
+                    <div className='TableSubTitle'>{t('confirm.symbol')}</div>
                   </td>
                   <td>
-                    <div>{ token.symbol }</div>
+                    <div>{token.symbol}</div>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <div className='TableSubTitle'>Name</div>
+                    <div className='TableSubTitle'>{t('confirm.name')}</div>
                   </td>
                   <td>
-                    <div>{ token.name }</div>
+                    <div>{token.name}</div>
                   </td>
                 </tr>
-                { age &&
+                {age &&
                   <tr>
                     <td>
-                      <div className='TableSubTitle'>Age</div>
+                      <div className='TableSubTitle'>{t('confirm.age')}</div>
                     </td>
                     <td>
-                      <div>{ age }</div>
+                      <div>{age}</div>
                     </td>
                   </tr>
                 }
-                { holders &&
+                {holders &&
                   <tr>
                     <td>
-                      <div className='TableSubTitle'>Holders</div>
+                      <div className='TableSubTitle'>{t('confirm.holders')}</div>
                     </td>
                     <td>
-                      <div>{ holders }</div>
+                      <div>{holders}</div>
                     </td>
                   </tr>
                 }
@@ -153,8 +156,8 @@ export default (props)=> {
       }
       footer={
         <div className="PaddingTopS PaddingRightM PaddingLeftM PaddingBottomS">
-          <button className='ButtonPrimary' onClick={ onClickConfirm }>
-            Confirm
+          <button className='ButtonPrimary' onClick={onClickConfirm}>
+            {t('confirm.button')}
           </button>
         </div>
       }

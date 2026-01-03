@@ -72,7 +72,6 @@ const openManagedSocket = ({
       endpointIndices[identifier] = (endpointIndices[identifier] + 1) % endpointsList.length
       if(pingInterval) { clearInterval(pingInterval) }
       if(keepAliveInterval) { clearInterval(keepAliveInterval) }
-      console.log(`Reconnecting socket "${identifier}" in ${delay}ms (attempt #${retryCounts[identifier]})`)
       setTimeout(() => {
         openManagedSocket({ identifier, onopen, onmessage, keepAlive, endpoint, endpoints })
       }, delay)
@@ -92,7 +91,7 @@ const openManagedSocket = ({
   }
     
   socket.onerror = function(error) {
-    console.log('WebSocket Error: ', identifier, error)
+    // WebSocket Error
   }
 
   return socket

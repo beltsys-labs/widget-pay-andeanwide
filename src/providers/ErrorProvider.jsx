@@ -2,15 +2,17 @@ import ErrorContext from '../contexts/ErrorContext'
 import ErrorGraphic from '../graphics/wallets/error'
 import React, { useState, useEffect } from 'react'
 import { ReactDialog } from '@depay/react-dialog'
+import { toast } from 'react-toastify'
+import { useTranslation } from '../providers/TranslationProvider'
 
 class ErrorBoundary extends React.Component {
-  
+
   constructor(props) {
     super(props);
   }
 
   componentDidCatch(error, errorInfo) {
-    if(error.error){ error = error.error }
+    if (error.error) { error = error.error }
     this.props.setError(error);
   }
 
@@ -19,54 +21,51 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default (props)=>{
-
+export default (props) => {
+  const { t } = useTranslation()
   const [error, setError] = useState(props.error)
   const [open, setOpen] = useState(true)
 
-  useEffect(()=>{
+  useEffect(() => {
     window._depayWidgetError = undefined
   }, [])
 
-  let setErrorFromChildren = (error)=>{
+  let setErrorFromChildren = (error) => {
     window._depayWidgetError = error
-    if(error.error){ error = error.error }
+    if (error.error) { error = error.error }
     setError(error)
-    if(props.errorCallback) { props.errorCallback(error.message || error.toString()) }
+    toast.error(t('toast.error') || 'An error occurred', {
+      position: "bottom-center",
+      autoClose: 5000,
+    })
+    if (props.errorCallback) { props.errorCallback(error.message || error.toString()) }
   }
 
-  let close = ()=>{
+  let close = () => {
     setOpen(false)
     setTimeout(props.unmount, 300)
   }
 
-  if(error) {
+  if (error) {
 
-    return(
-      <ReactDialog container={ props.container } close={ close } open={ open }>
+    return (
+      <ReactDialog container={props.container} close={close} open={open}>
         <div className="Dialog ReactDialogAnimation">
-          
+
           <div className="DialogHeader TextLeft">
             <div className="PaddingTopS PaddingLeftS PaddingRightS">
-              <a 
-                href={`https://support.depay.com?query=${encodeURIComponent(`DePay Widget Error: ${error.message || error.toString()}`)}`}
-                target="_blank"
-                className="Card secondary small inlineBlock"
-              >
-                Contact support
-              </a>
             </div>
           </div>
 
           <div className="DialogBody TextCenter">
             <div className="GraphicWrapper PaddingTopS">
-              <ErrorGraphic/>
+              <ErrorGraphic />
             </div>
             <h1 className="LineHeightL Text FontSizeL PaddingTopS FontWeightBold">Oops, Something Went Wrong</h1>
             <div className="Text PaddingTopS PaddingBottomS PaddingLeftS PaddingRightS">
               <div className="PaddingLeftS PaddingRightS">
                 <pre className="ErrorSnippetText">
-                  { error.message || error.toString() }
+                  {error.message || error.toString()}
                 </pre>
               </div>
               <div className="PaddingTopS PaddingBottomS">
@@ -79,9 +78,9 @@ export default (props)=>{
 
           <div className="DialogFooter">
             <div className="PaddingTopXS PaddingRightM PaddingLeftM PaddingBottomM">
-              <button 
+              <button
                 className={"ButtonPrimary"}
-                onClick={ close }
+                onClick={close}
               >
                 Try again
               </button>
@@ -91,14 +90,14 @@ export default (props)=>{
       </ReactDialog>
     )
   } else {
-    return(
+    return (
       <ErrorContext.Provider value={{
         setError: setErrorFromChildren,
         errorCallback: props.errorCallback,
         error
       }}>
-        <ErrorBoundary setError={ setErrorFromChildren }>
-          { props.children }
+        <ErrorBoundary setError={setErrorFromChildren}>
+          {props.children}
         </ErrorBoundary>
       </ErrorContext.Provider>
     )

@@ -5,33 +5,36 @@ import isMobile from '../helpers/isMobile'
 import React, { useState, useEffect, useContext } from 'react'
 import WalletContext from '../contexts/WalletContext'
 import { NavigateStackContext } from '@depay/react-dialog-stack'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=> {
+export default (props) => {
 
   const { setError } = useContext(ErrorContext)
   const { message, endpoint } = useContext(ConfigurationContext)
   let { recoverSignature } = useContext(ConfigurationContext)
   const { wallet, account } = useContext(WalletContext)
-  const [ loggingIn, setLoggingIn ] = useState(false)
-  if(!wallet) { return null }
+  const [loggingIn, setLoggingIn] = useState(false)
+  const { t } = useTranslation()
+
+  if (!wallet) { return null }
   const walletName = wallet?.name ? wallet.name : 'wallet'
   const walletLogo = wallet?.logo ? wallet.logo : undefined
-  if(typeof recoverSignature != 'function') {
-    recoverSignature = ({ message, signature })=> {
-      return new Promise((resolve, reject)=>{
+  if (typeof recoverSignature != 'function') {
+    recoverSignature = ({ message, signature }) => {
+      return new Promise((resolve, reject) => {
         fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message, signature })
         })
-          .then((response)=>{
-            if(response.status == 200) {
-              response.text().then((account)=>{
+          .then((response) => {
+            if (response.status == 200) {
+              response.text().then((account) => {
                 resolve(account)
               }).catch(setError)
             } else {
-              response.text().then((text)=>{
-                setError(text || 'Recovering login signature failed!')
+              response.text().then((text) => {
+                setError(text || t('login.recoveringFailed'))
               })
             }
           })
@@ -39,29 +42,29 @@ export default (props)=> {
     }
   }
 
-  const login = ()=> {
-    if(!account) {
-      setError('No wallet account found')
+  const login = () => {
+    if (!account) {
+      setError(t('login.noAccount'))
       return
     }
     setLoggingIn(true)
     let messageToSign
-    if(typeof message == 'function'){
+    if (typeof message == 'function') {
       messageToSign = message(account)
     } else {
       messageToSign = message
     }
-    wallet.sign(messageToSign).then((signature)=>{
-      recoverSignature({ message: messageToSign, signature, wallet }).then((account)=>{
+    wallet.sign(messageToSign).then((signature) => {
+      recoverSignature({ message: messageToSign, signature, wallet }).then((account) => {
         props.resolve({ account, wallet })
         setLoggingIn(false)
-      }).catch((error)=>{
+      }).catch((error) => {
         setLoggingIn(false)
         setError(error)
       })
-    }).catch((error)=>{
+    }).catch((error) => {
       setLoggingIn(false)
-      if(error && error.code && (error.code == 4001 || error.code == 'ACTION_REJECTED')) {
+      if (error && error.code && (error.code == 4001 || error.code == 'ACTION_REJECTED')) {
         // nothing happens
       } else {
         setError(error)
@@ -69,13 +72,13 @@ export default (props)=> {
     })
   }
 
-  useEffect(()=>{
-    if(!isMobile() && account){
+  useEffect(() => {
+    if (!isMobile() && account) {
       login()
     }
   }, [account])
 
-  return(
+  return (
     <Dialog
       footer={
         <div className="PaddingTopXS PaddingRightM PaddingLeftM PaddingBottomM">
@@ -89,13 +92,13 @@ export default (props)=> {
                 </div>
                 <div className="TextCenter PaddingTopXS">
                   <span className="FontSizeL">
-                    Confirm in your wallet
+                    {t('footer.confirmInWallet')}
                   </span>
                 </div>
               </div>
             </div>
           }
-          { !loggingIn &&
+          {!loggingIn &&
             <div className="PaddingTopXS">
               <div className="PaddingTopXS PaddingBottomM">
                 <div className="ActionIndicator MarginBottomXS">
@@ -104,12 +107,12 @@ export default (props)=> {
                 </div>
                 <div className="TextCenter PaddingTopXS">
                   <span className="FontSizeL">
-                    Click "Log in" and confirm
+                    {t('login.clickToLogIn')}
                   </span>
                 </div>
               </div>
-              <button className='ButtonPrimary' onClick={ login }>
-                Log in
+              <button className='ButtonPrimary' onClick={login}>
+                {t('login.logIn')}
               </button>
             </div>
           }

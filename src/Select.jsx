@@ -9,54 +9,57 @@ import requireReactVersion from './helpers/requireReactVersion'
 import SelectionProvider from './providers/SelectionProvider'
 import SelectNFTStack from './stacks/SelectNFTStack'
 import SelectTokenStack from './stacks/SelectTokenStack'
+import TranslationProvider from './providers/TranslationProvider'
 import UpdatableProvider from './providers/UpdatableProvider'
 
 let Select = (options) => {
   requireReactVersion()
-  let style, error, document, what
-  if(typeof options == 'object') ({ style, error, document, what } = options)
-  
+  let style, error, document, what, locale, translations, poweredBy, supportUrl
+  if (typeof options == 'object') ({ style, error, document, what, locale, translations, poweredBy, supportUrl } = options)
+
   let startupError
-  if(what == undefined) {
+  if (what == undefined) {
     startupError = '"what" needs to be configured!'
   } else if (['token', 'nft'].indexOf(what) < 0) {
     startupError = `Unknown "what" configured: ${what}!`
   }
 
-  return new Promise(async (resolve, reject)=>{
-    let unmount = mount({ style, document: ensureDocument(document) }, (unmount)=> {
-      const userClosedDialog = ()=>{
+  return new Promise(async (resolve, reject) => {
+    let unmount = mount({ style, document: ensureDocument(document) }, (unmount) => {
+      const userClosedDialog = () => {
         reject('USER_CLOSED_DIALOG')
         unmount()
       }
-      return (container)=>
-        <ErrorProvider error={ startupError } errorCallback={ error } container={ container } unmount={ unmount }>
-          <ConfigurationProvider configuration={{ what }}>
-            <UpdatableProvider>
-              <ClosableProvider unmount={ userClosedDialog }>
-                <SelectionProvider>
-                  { what == 'token' &&
-                    <SelectTokenStack
-                      document={ document }
-                      container={ container }
-                      unmount={ unmount }
-                      resolve={ resolve }
-                    />
-                  }
-                  { what == 'nft' &&
-                    <SelectNFTStack
-                      document={ document }
-                      container={ container }
-                      unmount={ unmount }
-                      resolve={ resolve }
-                    />
-                  }
-                </SelectionProvider>
-                <PoweredBy/>
-              </ClosableProvider>
-            </UpdatableProvider>
-          </ConfigurationProvider>
-        </ErrorProvider>
+      return (container) =>
+        <TranslationProvider locale={locale} translations={translations}>
+          <ErrorProvider error={startupError} errorCallback={error} container={container} unmount={unmount}>
+            <ConfigurationProvider configuration={{ what, poweredBy, supportUrl }}>
+              <UpdatableProvider>
+                <ClosableProvider unmount={userClosedDialog}>
+                  <SelectionProvider>
+                    {what == 'token' &&
+                      <SelectTokenStack
+                        document={document}
+                        container={container}
+                        unmount={unmount}
+                        resolve={resolve}
+                      />
+                    }
+                    {what == 'nft' &&
+                      <SelectNFTStack
+                        document={document}
+                        container={container}
+                        unmount={unmount}
+                        resolve={resolve}
+                      />
+                    }
+                  </SelectionProvider>
+                  <PoweredBy />
+                </ClosableProvider>
+              </UpdatableProvider>
+            </ConfigurationProvider>
+          </ErrorProvider>
+        </TranslationProvider>
     })
   })
 }

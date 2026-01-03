@@ -11,11 +11,15 @@ export default (props)=>{
 
   useEffect(()=>{
     if(amountsMissing) {
-      setAccept(acceptWithAmount)
+      if (acceptWithAmount && Array.isArray(acceptWithAmount) && acceptWithAmount.length > 0) {
+        // Crear una nueva referencia del array para forzar la detección del cambio
+        const newAccept = JSON.parse(JSON.stringify(acceptWithAmount))
+        setAccept(newAccept)
+      }
     } else {
       setAccept(configuredAccept)
     }
-  }, [amountsMissing, acceptWithAmount])
+  }, [amountsMissing, acceptWithAmount, configuredAccept])
 
   return(
     <PaymentAmountRoutingContext.Provider value={{}}>

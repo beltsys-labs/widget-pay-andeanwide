@@ -39,14 +39,16 @@ import PaymentValueContext from '../contexts/PaymentValueContext'
 import QRCodeStyling from "qr-code-styling"
 import React, { useState, useEffect, useContext, useRef } from 'react'
 import SolanaPayLogo from '../icons/SolanaPayLogo'
+import supportUrl from '../helpers/supportUrl'
 import Token from '@depay/web3-tokens'
 import TracingFailedDialog from '../dialogs/TracingFailedDialog'
 import UUIDv4 from '../helpers/UUIDv4'
 import WalletContext from '../contexts/WalletContext'
 import { ethers } from 'ethers'
 import { NavigateStackContext } from '@depay/react-dialog-stack'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=> {
+export default (props) => {
 
   const { accept, allow, deny } = useContext(ConfigurationContext)
   const { callSentCallback, callSucceededCallback, callFailedCallback } = useContext(CallbackContext)
@@ -57,12 +59,13 @@ export default (props)=> {
   const { setSelectedRoute } = useContext(PaymentRoutingContext)
   const { paymentValue, displayedPaymentValue } = useContext(PaymentValueContext)
   const { setTransaction } = useContext(PaymentTrackingContext)
+  const { t } = useTranslation()
 
-  const [ selectedPaymentOption, setSelectedPaymentOption ] = useState()
-  const [ QRCodeURI, setQRCodeURI ] = useState()
-  const [ QRCode, setQRCode ] = useState()
-  const [ state, setState ] = useState('initializing')
-  const [ showDropDown, setShowDropDown ] = useState(false)
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState()
+  const [QRCodeURI, setQRCodeURI] = useState()
+  const [QRCode, setQRCode] = useState()
+  const [state, setState] = useState('initializing')
+  const [showDropDown, setShowDropDown] = useState(false)
 
   const QRCodeElement = useRef()
   const solanaPayTransactionPollingInterval = useRef()
@@ -74,8 +77,8 @@ export default (props)=> {
   const transactionPollingInterval = useRef()
   const solanPayPayment = useRef()
   const transaction = useRef()
-  
-  const getNewQRCode = ()=>{
+
+  const getNewQRCode = () => {
     return new QRCodeStyling({
       width: 340,
       height: 340,
@@ -91,37 +94,37 @@ export default (props)=> {
     })
   }
 
-  const startSolanaPayTransactionPolling = ()=>{
-    if(solanaPayTransactionPollingInterval.current) { clearInterval(solanaPayTransactionPollingInterval.current) }
-    solanaPayTransactionPollingInterval.current = setInterval(()=>{
+  const startSolanaPayTransactionPolling = () => {
+    if (solanaPayTransactionPollingInterval.current) { clearInterval(solanaPayTransactionPollingInterval.current) }
+    solanaPayTransactionPollingInterval.current = setInterval(() => {
       fetch(`https://public.depay.com/solanapay/${secretId.current}/status`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        }).then((response)=>{
-          if(response.status == 200) {
-            return response.json()
-          } else {
-            return undefined
-          }
-        }).then((data)=>{
-          if(data && data.sender) {
-            clearInterval(solanaPayTransactionPollingInterval.current)
-            transactionLoaded(data)
-          }
-        })
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      }).then((response) => {
+        if (response.status == 200) {
+          return response.json()
+        } else {
+          return undefined
+        }
+      }).then((data) => {
+        if (data && data.sender) {
+          clearInterval(solanaPayTransactionPollingInterval.current)
+          transactionLoaded(data)
+        }
+      })
     }, 2000)
   }
 
-  const openSolanaPayTransactionSocket = ()=>{
-    if(solanaPayTransactionSocket.current) { solanaPayTransactionSocket.current.close(1000) }
+  const openSolanaPayTransactionSocket = () => {
+    if (solanaPayTransactionSocket.current) { solanaPayTransactionSocket.current.close(1000) }
     const identifier = JSON.stringify({ secret_id: secretId.current, channel: 'SolanaPayChannel' })
     solanaPayTransactionSocket.current = openManagedSocket({
       identifier,
-      onopen: ()=>{
-        return({ command: 'subscribe', identifier })
+      onopen: () => {
+        return ({ command: 'subscribe', identifier })
       },
-      onmessage: (eventData, socket)=>{
-        if(eventData?.type == 'confirm_subscription') {
+      onmessage: (eventData, socket) => {
+        if (eventData?.type == 'confirm_subscription') {
           socket.send(JSON.stringify({
             command: 'message', identifier,
             data: JSON.stringify({
@@ -131,28 +134,28 @@ export default (props)=> {
               icon: getFavicon() || 'https://depay.com/favicon.png',
               accept,
               allow,
-              deny,  
+              deny,
             })
           }))
-        } else if(eventData?.message?.event === 'created') {
+        } else if (eventData?.message?.event === 'created') {
           startSolanaPayTransactionPolling()
           setQRCodeURI(`solana:https://public.depay.com/solanapay/${secretId.current}`)
         } else if (eventData?.message?.event === 'scanned') {
-          if(!solanPayPayment.current) {
-            setClosable("Are you sure you want to abort this payment?")
+          if (!solanPayPayment.current) {
+            setClosable(t('payment.abort'))
             setState('pay')
           }
         } else if (eventData?.message?.event === 'loaded') {
-          if(!solanPayPayment.current) {
+          if (!solanPayPayment.current) {
             transactionLoaded(eventData.message)
-            setClosable("Are you sure you want to abort this payment?")
+            setClosable(t('payment.abort'))
             setState('pay')
           }
         }
       },
       keepAlive: {
-        interval: 3000, 
-        callback: ()=> {
+        interval: 3000,
+        callback: () => {
           return {
             type: "ping",
             message: Math.floor(Date.now() / 1000)
@@ -162,41 +165,41 @@ export default (props)=> {
     })
   }
 
-  const openTransactionTrackingSocket = ({ sender, receiver, deadline })=>{
-    if(transactionTrackingSocket.current) { transactionTrackingSocket.current.close(1000) }
+  const openTransactionTrackingSocket = ({ sender, receiver, deadline }) => {
+    if (transactionTrackingSocket.current) { transactionTrackingSocket.current.close(1000) }
     let id = 1
     transactionTrackingSocket.current = openManagedSocket({
       identifier: JSON.stringify({ type: 'SolanaTransactionLogSubscription', sender, receiver, deadline }),
       endpoints: Blockchains.solana.sockets.reverse(),
-      onopen: ()=>{
-        return(
+      onopen: () => {
+        return (
           {
             "jsonrpc": "2.0",
             "id": id,
             "method": "logsSubscribe",
             "params": [
-              { "mentions": [ sender ] }
+              { "mentions": [sender] }
             ]
           }
         )
       },
-      onmessage: async(eventData, socket)=>{
-        if(eventData) {
-          if(eventData && eventData?.params?.result?.value?.logs && (eventData?.params?.result?.value?.logs || [])?.find((log)=>{return log.match(`Program ${routers.solana.address}`)})) {
+      onmessage: async (eventData, socket) => {
+        if (eventData) {
+          if (eventData && eventData?.params?.result?.value?.logs && (eventData?.params?.result?.value?.logs || [])?.find((log) => { return log.match(`Program ${routers.solana.address}`) })) {
             const provider = await getProvider('solana')
             const transactionId = eventData.params.result.value.signature
             const fullTransactionData = await provider.getTransaction(transactionId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 })
             const foundRouterInstruction = getPaymentRouterInstruction(fullTransactionData)
-            if(foundRouterInstruction && foundRouterInstruction.deadline.toString() === deadline.toString()) {
+            if (foundRouterInstruction && foundRouterInstruction.deadline.toString() === deadline.toString()) {
               const result = eventData?.params?.result?.value
               setTransaction({ blockchain: 'solana', id: transactionId, url: Blockchains.solana.explorerUrlFor({ transaction: { id: transactionId } }) })
-              if(fullTransactionData?.meta?.err !== null) {
+              if (fullTransactionData?.meta?.err !== null) {
                 transactionFound(result.signature)
                 socket.close(1000)
                 setClosable(true)
                 callFailedCallback(transaction.current, solanPayPayment.current)
                 navigate('PaymentFailed')
-              } else if(result) {
+              } else if (result) {
                 transactionFound(result.signature)
                 setState('succeeded')
                 callSucceededCallback(transaction.current, solanPayPayment.current)
@@ -207,8 +210,8 @@ export default (props)=> {
         }
       },
       keepAlive: {
-        interval: 3000, 
-        callback: ()=> {
+        interval: 3000,
+        callback: () => {
           return {
             jsonrpc: "2.0",
             id: id++,
@@ -220,22 +223,22 @@ export default (props)=> {
     })
   }
 
-  const startTransactionPolling = ({ sender, receiver, deadline })=>{
-    if(transactionPollingInterval.current) { clearInterval(transactionPollingInterval.current) }
-    transactionPollingInterval.current = setInterval(async()=>{
+  const startTransactionPolling = ({ sender, receiver, deadline }) => {
+    if (transactionPollingInterval.current) { clearInterval(transactionPollingInterval.current) }
+    transactionPollingInterval.current = setInterval(async () => {
       const provider = await getProvider('solana')
       const signatures = await provider.getSignaturesForAddress(new PublicKey(sender))
-      if(signatures && signatures.length && signatures[0].slot > afterBlock.current) {
-        const relevantTransactions = signatures.filter((signature)=>signature.slot > afterBlock.current)
-        relevantTransactions.forEach(async(relevantTransaction)=>{
+      if (signatures && signatures.length && signatures[0].slot > afterBlock.current) {
+        const relevantTransactions = signatures.filter((signature) => signature.slot > afterBlock.current)
+        relevantTransactions.forEach(async (relevantTransaction) => {
           const transactionId = relevantTransaction.signature
           const fullTransactionData = await provider.getTransaction(transactionId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 })
           const foundRouterInstruction = getPaymentRouterInstruction(fullTransactionData)
-          if(foundRouterInstruction && foundRouterInstruction.deadline.toString() === deadline.toString()) {
+          if (foundRouterInstruction && foundRouterInstruction.deadline.toString() === deadline.toString()) {
             transactionFound(fullTransactionData.transaction.signatures[0])
             setTransaction({ blockchain: 'solana', id: transactionId, url: Blockchains.solana.explorerUrlFor({ transaction: { id: transactionId } }) })
-            if(transactionPollingInterval.current) { clearInterval(transactionPollingInterval.current) }
-            if(fullTransactionData?.meta?.err !== null) {
+            if (transactionPollingInterval.current) { clearInterval(transactionPollingInterval.current) }
+            if (fullTransactionData?.meta?.err !== null) {
               callFailedCallback(transaction.current, solanPayPayment.current)
               navigate('PaymentFailed')
             } else {
@@ -248,7 +251,7 @@ export default (props)=> {
     }, 1000)
   }
 
-  const transactionFound = (transactionId)=> {
+  const transactionFound = (transactionId) => {
     transaction.current = {
       from: solanPayPayment.current.fromAddress,
       blockchain: 'solana',
@@ -267,17 +270,17 @@ export default (props)=> {
     )
   }
 
-  const attemptTracing = ()=>{
+  const attemptTracing = () => {
     return trace(
       afterBlock.current,
       solanPayPayment.current,
       currentDeadline.current
-    ).catch(()=>{
+    ).catch(() => {
       setState('tracingFailed')
     })
   }
 
-  const transactionLoaded = async({
+  const transactionLoaded = async ({
     sender,
     from_token,
     from_amount,
@@ -296,7 +299,7 @@ export default (props)=> {
 
     setAccount(sender)
 
-    if(solanPayPayment.current) { return }
+    if (solanPayPayment.current) { return }
     solanPayPayment.current = {
       blockchain: 'solana',
       fromAddress: sender,
@@ -327,27 +330,27 @@ export default (props)=> {
     let token = new Token({ blockchain: 'solana', address: from_token })
     setSelectedPaymentOption({
       token: from_token,
-      amount: await token.readable(from_amount) ,
+      amount: await token.readable(from_amount),
       symbol: await token.symbol(),
     })
   }
 
-  const reset = ()=>{
-    if(solanaPayTransactionPollingInterval.current) { clearInterval(solanaPayTransactionPollingInterval.current) }
-    if(transactionPollingInterval.current) { clearInterval(transactionPollingInterval.current) }
-    if(solanaPayTransactionSocket.current) { solanaPayTransactionSocket.current.close(1000) }
-    if(transactionTrackingSocket.current) { transactionTrackingSocket.current.close(1000) }
-    if(afterBlock.current) { afterBlock.current = undefined }
-    if(currentDeadline.current) { currentDeadline.current = undefined }
-    if(secretId.current) { secretId.current = undefined }
-    if(solanPayPayment.current) { solanPayPayment.current = undefined }
+  const reset = () => {
+    if (solanaPayTransactionPollingInterval.current) { clearInterval(solanaPayTransactionPollingInterval.current) }
+    if (transactionPollingInterval.current) { clearInterval(transactionPollingInterval.current) }
+    if (solanaPayTransactionSocket.current) { solanaPayTransactionSocket.current.close(1000) }
+    if (transactionTrackingSocket.current) { transactionTrackingSocket.current.close(1000) }
+    if (afterBlock.current) { afterBlock.current = undefined }
+    if (currentDeadline.current) { currentDeadline.current = undefined }
+    if (secretId.current) { secretId.current = undefined }
+    if (solanPayPayment.current) { solanPayPayment.current = undefined }
     setSelectedPaymentOption()
   }
 
-  const initializeSolanaPay = ()=>{
+  const initializeSolanaPay = () => {
     reset()
-    request({ blockchain: 'solana', method: 'latestBlockNumber' }).then((latestBlock)=>{
-      if(latestBlock) {
+    request({ blockchain: 'solana', method: 'latestBlockNumber' }).then((latestBlock) => {
+      if (latestBlock) {
         afterBlock.current = latestBlock
         secretId.current = UUIDv4()
         openSolanaPayTransactionSocket()
@@ -357,93 +360,100 @@ export default (props)=> {
 
   const alternativeHeaderActionElement = (
     <span className="DropDownWrapper">
-      <button type="button" onClick={ ()=>setShowDropDown(!showDropDown) } className="ButtonCircular">
-        <MenuIcon/>
+      <button type="button" onClick={() => setShowDropDown(!showDropDown)} className="ButtonCircular">
+        <MenuIcon />
       </button>
-      { showDropDown && <DropDown hide={()=>setShowDropDown(false)}
+      {showDropDown && <DropDown hide={() => setShowDropDown(false)}
         items={[
-          { label: "Contact support", action: ()=>{ window.open(`https://support.depay.com?query=${encodeURIComponent(`Need help with Solana Pay`)}`, '_blank') } },
+          {
+            label: t('menu.contactSupport'), action: () => {
+              window.open(supportUrl({
+                configuration,
+                params: { query: 'Need help with Solana Pay' }
+              }), '_blank')
+            }
+          },
         ].filter(Boolean)}
-      /> }
+      />}
     </span>
   )
 
-  useEffect(()=>{
+  useEffect(() => {
     initializeSolanaPay()
     return reset
   }, [])
 
-  useEffect(()=>{
+  useEffect(() => {
     const newQRCode = getNewQRCode()
     newQRCode.update({ data: QRCodeURI })
     setQRCode(newQRCode)
   }, [QRCodeURI])
 
-  useEffect(()=>{
-    if(afterBlock.current && QRCode) {
-      setTimeout(()=>setState('scan'), 400)
+  useEffect(() => {
+    if (afterBlock.current && QRCode) {
+      setTimeout(() => setState('scan'), 400)
     }
   }, [afterBlock && QRCode])
 
-  useEffect(()=>{
-    if(state === 'scan' && QRCode && QRCodeElement && QRCodeElement.current) {
+  useEffect(() => {
+    if (state === 'scan' && QRCode && QRCodeElement && QRCodeElement.current) {
       QRCodeElement.current.innerHTML = ""
       QRCode.append(QRCodeElement.current)
     }
   }, [state, QRCode])
 
-  useEffect(()=>{
-    if(release && synchronousTracking) {
+  useEffect(() => {
+    if (release && synchronousTracking) {
       setClosable(true)
     }
   }, [release, synchronousTracking])
 
-  if(state === 'tracingFailed') {
-    return(
+  if (state === 'tracingFailed') {
+    return (
       <TracingFailedDialog
-        tryAgain={ ()=>{
+        tryAgain={() => {
           setState('pay')
           attemptTracing()
-        } }
+        }}
       />
     )
   }
 
-  if(state === 'initializing') {
-    return(
+  if (state === 'initializing') {
+    return (
       <Dialog
-        alternativeHeaderAction={ alternativeHeaderActionElement }
+        alternativeHeaderAction={alternativeHeaderActionElement}
         header={
           <div className="PaddingTopS PaddingLeftM PaddingRightM">
-          <div>
-            <h1 className="LineHeightL FontSizeL TextLeft">
-              <SolanaPayLogo/>
-            </h1>
+            <div>
+              <h1 className="LineHeightL FontSizeL TextLeft">
+                <SolanaPayLogo />
+              </h1>
+            </div>
           </div>
-        </div>
         }
         body={
           <div className="MaxHeight">
             <div className="PaddingLeftL PaddingRightL PaddingTopS TextCenter">
               <div className="Card Skeleton" style={{ width: '100%', height: '300px' }}>
-                <div className="SkeletonBackground"/>
+                <div className="SkeletonBackground" />
               </div>
             </div>
           </div>
         }
       />
-    ) 
+    )
 
   } else {
 
-    return(
+    return (
       <Dialog
-        alternativeHeaderAction={ alternativeHeaderActionElement }
+        alternativeHeaderAction={alternativeHeaderActionElement}
         header={
           <div className="PaddingTopS PaddingLeftM PaddingRightM">
             <div>
               <h1 className="LineHeightL FontSizeL TextLeft">
-                <SolanaPayLogo/>
+                <SolanaPayLogo />
               </h1>
             </div>
           </div>
@@ -451,43 +461,43 @@ export default (props)=> {
         body={
           <div>
             <div className="PaddingLeftM PaddingRightM">
-              
+
               {
                 state === 'scan' &&
-                <div ref={ QRCodeElement } className="QRCode"/>
+                <div ref={QRCodeElement} className="QRCode" />
               }
 
-              { ['pay', 'succeeded'].includes(state) &&
+              {['pay', 'succeeded'].includes(state) &&
                 <div className="PaddingTopXS">
 
-                  { !selectedPaymentOption &&
+                  {!selectedPaymentOption &&
                     <div className="Card Skeleton">
-                      <div className="SkeletonBackground"/>
+                      <div className="SkeletonBackground" />
                     </div>
                   }
 
-                  { selectedPaymentOption &&
+                  {selectedPaymentOption &&
                     <div className="Card disabled">
                       <div className="CardImage">
                         <TokenImage
-                          blockchain={ 'solana' }
-                          address={ selectedPaymentOption?.token }
+                          blockchain={'solana'}
+                          address={selectedPaymentOption?.token}
                         />
-                        <img className={"BlockchainLogo small bottomRight " + Blockchains['solana'].name} style={{ backgroundColor: Blockchains['solana'].logoBackgroundColor }} src={Blockchains['solana'].logo} alt={Blockchains['solana'].label} title={Blockchains['solana'].label}/>
+                        <img className={"BlockchainLogo small bottomRight " + Blockchains['solana'].name} style={{ backgroundColor: Blockchains['solana'].logoBackgroundColor }} src={Blockchains['solana'].logo} alt={Blockchains['solana'].label} title={Blockchains['solana'].label} />
                       </div>
                       <div className="CardBody">
                         <div className="CardBodyWrapper">
                           <div className="CardText">
                             <div className="TokenAmountRow">
-                              { selectedPaymentOption?.amount &&
+                              {selectedPaymentOption?.amount &&
                                 <span className="TokenAmountCell">
-                                  { format(selectedPaymentOption?.amount) }
+                                  {format(selectedPaymentOption?.amount)}
                                 </span>
                               }
                               <span>&nbsp;</span>
-                              { selectedPaymentOption?.symbol &&
+                              {selectedPaymentOption?.symbol &&
                                 <span className="TokenSymbolCell">
-                                  { selectedPaymentOption?.symbol }
+                                  {selectedPaymentOption?.symbol}
                                 </span>
                               }
                             </div>
@@ -498,7 +508,7 @@ export default (props)=> {
                             displayedPaymentValue != `${selectedPaymentOption?.symbol} ${format(selectedPaymentOption?.amount)}` &&
                             <div className="TokenAmountRow small Opacity05">
                               <span className="TokenAmountCell">
-                                { displayedPaymentValue }
+                                {displayedPaymentValue}
                               </span>
                             </div>
                           }
@@ -507,7 +517,7 @@ export default (props)=> {
                             <div className="TokenAmountRow small">
                               <span className="TokenAmountCell">
                                 <div className="Skeleton" style={{ position: 'relative', marginTop: '2px', borderRadius: '10px', width: '82px', height: '15px' }}>
-                                  <div className="SkeletonBackground"/>
+                                  <div className="SkeletonBackground" />
                                 </div>
                               </span>
                             </div>
@@ -525,18 +535,18 @@ export default (props)=> {
         }
         footer={
           <div className="PaddingRightM PaddingLeftM PaddingBottomM">
-            
+
             {
               state === 'scan' &&
               <div className="Opacity05 PaddingBottomXS PaddingTopS">
-                <small>Scan QR code with your wallet</small>
+                <small>{t('wallet.scanQR')}</small>
               </div>
             }
 
             {
-              state === 'pay' &&  validationState !== true &&
+              state === 'pay' && validationState !== true &&
               <div className="PaddingTopXS">
-                
+
                 <div className="PaddingBottomS PaddingTopXS">
                   <div className="PaddingTopXS">
                     <div className="ActionIndicator MarginBottomXS">
@@ -545,7 +555,7 @@ export default (props)=> {
                     </div>
                     <div className="TextCenter PaddingTopXS">
                       <span className="FontSizeL">
-                        Confirm in your wallet
+                        {t('footer.confirmInWallet')}
                       </span>
                     </div>
                   </div>
@@ -561,39 +571,39 @@ export default (props)=> {
                   <div className="PaddingBottomS StepsWrapper">
 
                     <a
-                      href={ transaction?.current?.url } target="_blank" rel="noopener noreferrer" 
+                      href={transaction?.current?.url} target="_blank" rel="noopener noreferrer"
                       className={`Step Card small transparent done ${!synchronousTracking ? "active" : ""}`}
                     >
                       <div className="StepIcon">
                         <CheckmarkIcon className="small" />
                       </div>
                       <div className="StepText">
-                        <div className="StepText">Perform payment</div>
+                        <div className="StepText">{t('footer.performPayment')}</div>
                       </div>
                     </a>
                     <div className="StepConnector" />
 
-                    { synchronousTracking && !release &&
+                    {synchronousTracking && !release &&
                       <div className='Step Card small transparent active disabled'>
                         <div className="StepIcon">
-                          <div className="ActionIndicatorSpinner"/>
+                          <div className="ActionIndicatorSpinner" />
                         </div>
                         <div className="StepText">
                           <div className="StepText">
-                            <LoadingText>Confirming payment</LoadingText>
+                            <LoadingText>{t('footer.confirmingPayment')}</LoadingText>
                           </div>
                         </div>
                       </div>
                     }
-                    { synchronousTracking && release &&
-                      <a 
+                    {synchronousTracking && release &&
+                      <a
                         href={
                           transaction
                             ? link({
-                                url: `https://scan.depay.com/tx/solana/${transaction.current.id}?sender=${solanPayPayment.current.fromAddress}&receiver=${solanPayPayment.current.toAddress}&deadline=${solanPayPayment.current.deadline}`,
-                                target: '_blank',
-                                wallet: solanaPayWallet,
-                              })
+                              url: `https://scan.depay.com/tx/solana/${transaction.current.id}?sender=${solanPayPayment.current.fromAddress}&receiver=${solanPayPayment.current.toAddress}&deadline=${solanPayPayment.current.deadline}`,
+                              target: '_blank',
+                              wallet: solanaPayWallet,
+                            })
                             : undefined
                         }
                         target="_blank"
@@ -604,7 +614,7 @@ export default (props)=> {
                         </div>
                         <div className="StepText">
                           <div className="StepText">
-                            Payment confirmed
+                            {t('footer.paymentConfirmed')}
                           </div>
                         </div>
                       </a>
@@ -615,16 +625,16 @@ export default (props)=> {
                   {
                     (release || !synchronousTracking) && forwardTo &&
                     <div className="PaddingBottomXS">
-                      <a className="ButtonPrimary" href={ forwardTo } rel="noopener noreferrer">
-                        Continue
+                      <a className="ButtonPrimary" href={forwardTo} rel="noopener noreferrer">
+                        {t('footer.continue')}
                       </a>
                     </div>
                   }
                   {
                     (release || !synchronousTracking) && !forwardTo &&
                     <div className="PaddingBottomXS">
-                      <button className="ButtonPrimary" onClick={ close }>
-                        Done
+                      <button className="ButtonPrimary" onClick={close}>
+                        {t('payment.done')}
                       </button>
                     </div>
                   }

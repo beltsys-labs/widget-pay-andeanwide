@@ -1,16 +1,18 @@
 import React from 'react'
 import Dialog from '../components/Dialog'
 import QuestionsGraphic from '../graphics/wallets/questions'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=> {
+export default (props) => {
+  const { t } = useTranslation()
 
-  return(
+  return (
     <Dialog
-      stacked={ true }
+      stacked={true}
       header={
         <div>
           <div className="PaddingTopS PaddingLeftM PaddingRightM TextCenter">
-            <h1 className="LineHeightL FontSizeL">What is a wallet?</h1>
+            <h1 className="LineHeightL FontSizeL">{t('wallet.whatIs.title')}</h1>
           </div>
         </div>
       }
@@ -18,18 +20,16 @@ export default (props)=> {
         <div className="TextCenter PaddingLeftL PaddingRightL PaddingTopS">
 
           <div className="GraphicWrapper">
-            <QuestionsGraphic/>
+            <QuestionsGraphic />
           </div>
-          
+
           <p className="FontSizeM PaddingTopS PaddingLeftM PaddingRightM">
-            Wallets are used to send, receive, and store digital assets.
-            Wallets come in many forms.
-            They are either built into your browser, an extension added to your browser, an app on your phone, your computer or even a piece of hardware.
+            {t('wallet.whatIs.description')}
           </p>
 
           <div className="PaddingTopS">
             <a className="Link FontSizeM" href="https://ethereum.org/wallets/" target="_blank" rel="noopener noreferrer">
-              Learn more
+              {t('wallet.whatIs.learnMore')}
             </a>
           </div>
         </div>

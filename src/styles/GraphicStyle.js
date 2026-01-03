@@ -1,5 +1,5 @@
-export default (style)=>{
-  return(`
+export default (style) => {
+  return (`
 
     .GraphicWrapper {
       display: block;
@@ -12,11 +12,11 @@ export default (style)=>{
     }
 
     .GraphicPassiveColor {
-      fill: ${style.colors.mixPassive};
+      fill: ${style.colors.icons};
     }
 
     .GraphicActiveColor {
-      fill: ${style.colors.mixActive};
+      fill: ${style.colors.icons};
     }
   `)
 }

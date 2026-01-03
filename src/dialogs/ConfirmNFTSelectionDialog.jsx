@@ -6,55 +6,57 @@ import msToTime from '../helpers/msToTime'
 import React, { useState, useContext, useEffect } from 'react'
 import SelectionContext from '../contexts/SelectionContext'
 import { NavigateStackContext } from '@depay/react-dialog-stack'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=> {
+export default (props) => {
 
   const { selection, setSelection } = useContext(SelectionContext)
   const { setOpen } = useContext(ClosableContext)
   const { navigate } = useContext(NavigateStackContext)
+  const { t } = useTranslation()
 
   let age, holders
 
-  if(selection.nft.createdAt) {
+  if (selection.nft.createdAt) {
     age = msToTime(new Date() - new Date(selection.nft.createdAt))
     age = [
-      ((age.year && age.year >= 1) ? (age.year >= 2 ? `${age.year} years` : `1 year`) : undefined ),
-      ((age.month && age.month >= 1) ? (age.month >= 2 ? `${age.month} months` : `1 month`) : undefined ),
-      ((age.day && age.day >= 1 && age.month <=1 && age.year <1) ? (age.day >= 2 ? `${age.day} days !!!` : `1 day !!!`) : undefined )
+      ((age.year && age.year >= 1) ? (age.year >= 2 ? t('time.years', { count: age.year }) : t('time.year')) : undefined),
+      ((age.month && age.month >= 1) ? (age.month >= 2 ? t('time.months', { count: age.month }) : t('time.month')) : undefined),
+      ((age.day && age.day >= 1 && age.month <= 1 && age.year < 1) ? (age.day >= 2 ? t('time.days', { count: age.day }) : t('time.day')) : undefined)
     ].filter(n => n).join(' ')
   }
 
   let blockchain = selection.nft?.blockchain || selection.blockchain?.name
 
-  if(blockchain == undefined) {
+  if (blockchain == undefined) {
     navigate('SelectBlockchain')
-    return(null)
+    return (null)
   }
 
-  const onClickConfirm = ()=>{
+  const onClickConfirm = () => {
     setOpen(false)
-    props.resolve({...selection.nft, blockchain })
+    props.resolve({ ...selection.nft, blockchain })
     setTimeout(props.unmount, 300)
   }
 
-  return(
+  return (
     <Dialog
       header={
         <div className="PaddingTopS PaddingLeftM PaddingRightM">
           <div>
-            <h1 className="LineHeightL FontSizeL">Confirm Selection</h1>
+            <h1 className="LineHeightL FontSizeL">{t('confirm.selection')}</h1>
           </div>
         </div>
       }
-      stacked={ true }
+      stacked={true}
       body={
         <div className="PaddingTopS PaddingLeftM PaddingRightM">
           <div className="TokenImage medium TextCenter">
-            { selection.nft.image && <img src={ selection.nft.image }/> }
+            {selection.nft.image && <img src={selection.nft.image} />}
           </div>
           <div className="PaddingTopS TextCenter">
             <div className="Alert FontSizeS">
-              <strong>Review this information</strong>
+              <strong>{t('confirm.review')}</strong>
             </div>
           </div>
           <div className="PaddingTopXS">
@@ -62,54 +64,54 @@ export default (props)=> {
               <tbody>
                 <tr>
                   <td>
-                    <div className='TableSubTitle'>Blockchain</div>
+                    <div className='TableSubTitle'>{t('confirm.blockchain')}</div>
                   </td>
                   <td>
-                    <div>{ Blockchains.findByName(blockchain).label }</div>
+                    <div>{Blockchains.findByName(blockchain).label}</div>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <div className='TableSubTitle'>Name</div>
+                    <div className='TableSubTitle'>{t('confirm.name')}</div>
                   </td>
                   <td>
-                    <a className="Link" href={ selection.nft.link } target="_blank" rel="noopener noreferrer">
-                      { selection.nft.name }
+                    <a className="Link" href={selection.nft.link} target="_blank" rel="noopener noreferrer">
+                      {selection.nft.name}
                     </a>
                   </td>
                 </tr>
-                { selection.nft.address &&
+                {selection.nft.address &&
                   <tr>
                     <td>
-                      <div className='TableSubTitle'>Address</div>
+                      <div className='TableSubTitle'>{t('confirm.address')}</div>
                     </td>
                     <td>
                       <div>
-                        <a className="Link" title={ selection.nft.address } href={ Blockchains.findByName(blockchain).explorerUrlFor({ token: selection.nft.address }) } target="_blank" rel="noopener noreferrer">
-                          { addressEllipsis(selection.nft.address, 6) }
+                        <a className="Link" title={selection.nft.address} href={Blockchains.findByName(blockchain).explorerUrlFor({ token: selection.nft.address })} target="_blank" rel="noopener noreferrer">
+                          {addressEllipsis(selection.nft.address, 6)}
                         </a>
                       </div>
                     </td>
                   </tr>
                 }
-                { selection.nft.id &&
+                {selection.nft.id &&
                   <tr>
                     <td>
-                      <div className='TableSubTitle'>Token ID</div>
+                      <div className='TableSubTitle'>{t('confirm.tokenId')}</div>
                     </td>
                     <td>
-                      <div>{ selection.nft.id }</div>
+                      <div>{selection.nft.id}</div>
                     </td>
                   </tr>
                 }
-                { selection.nft.addresses &&
+                {selection.nft.addresses &&
                   <tr>
                     <td>
-                      <div className='TableSubTitle'>Addresses</div>
+                      <div className='TableSubTitle'>{t('confirm.addresses')}</div>
                     </td>
                     <td>
                       <div>
-                        { selection.nft.addresses.join(", ") }
+                        {selection.nft.addresses.join(", ")}
                       </div>
                     </td>
                   </tr>
@@ -121,8 +123,8 @@ export default (props)=> {
       }
       footer={
         <div className="PaddingTopS PaddingRightM PaddingLeftM PaddingBottomS">
-          <button className='ButtonPrimary' onClick={ onClickConfirm }>
-            Confirm
+          <button className='ButtonPrimary' onClick={onClickConfirm}>
+            {t('confirm.button')}
           </button>
         </div>
       }

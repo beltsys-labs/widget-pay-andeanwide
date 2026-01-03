@@ -2,21 +2,22 @@ import ConfigurationContext from '../contexts/ConfigurationContext'
 import Dialog from '../components/Dialog'
 import LoadingText from '../components/LoadingText'
 import React, { useContext } from 'react'
+import { useTranslation } from '../providers/TranslationProvider'
 
-export default (props)=>{
-  
-  return(
+export default (props) => {
+  const { t } = useTranslation()
+  return (
     <Dialog
-      closable={ false }
+      closable={false}
       header={
         <div className="PaddingTopS PaddingLeftM PaddingRightM TextLeft">
-          <h1 className="LineHeightL FontSizeL"><LoadingText>Loading</LoadingText></h1>
+          <h1 className="LineHeightL FontSizeL"><LoadingText>{t('loading')}</LoadingText></h1>
         </div>
       }
       body={
         <div className="PaddingLeftM PaddingRightM PaddingBottomXS">
           <div className="Card Skeleton">
-            <div className="SkeletonBackground"/>
+            <div className="SkeletonBackground" />
           </div>
         </div>
       }
@@ -25,13 +26,13 @@ export default (props)=>{
           <div className="PaddingBottomXS">
             <div className="SkeletonWrapper PaddingBottomXS">
               <div className="ButtonPrimary Skeleton">
-                <div className="SkeletonBackground"/>
+                <div className="SkeletonBackground" />
               </div>
             </div>
           </div>
-          { props.text !== false &&
+          {props.text !== false &&
             <div className="TextCenter Opacity05 PaddingTopXS">
-              <strong>{ props.text }</strong>
+              <strong>{props.text}</strong>
             </div>
           }
         </div>

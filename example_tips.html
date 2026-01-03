@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DePay Tips Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.1/ethers.umd.min.js"
+        type="application/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/decimal.js@10/decimal.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin
+        src="https://cdn.jsdelivr.net/npm/@uiw/copy-to-clipboard/dist/copy-to-clipboard.umd.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/solana-web3.js@1.98.2"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/local-currency@3"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/react-dialog@14"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/react-dialog-stack@8"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/react-shadow-dom@5"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/js-verify-signature-web@3"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-blockchains@9.8.10"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-client@11.1.10"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-tokens@11.1.0"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/react-token-image@6"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/coinbase-wallet-sdk@3"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/walletconnect-v2@2.12.2"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-wallets@18.1.17"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-exchanges@15"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/@depay/web3-payments@15.3.2"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/qr-code-styling@1"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/fuse.js@6"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react-rangeslider@2/umd/rangeslider.js"></script>
+    <script crossorigin
+        src="https://cdn.jsdelivr.net/npm/@tanstack/react-virtual@3.0.0-beta.54/build/umd/index.production.js"></script>
+    <script src="tmp/index.dev.js" onload="window._depayWidgetsLoaded = true;"
+        onerror="window._depayWidgetsLoadError = true;"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/react-toastify@9/dist/ReactToastify.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.css">
+    <style>
+        .selected {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+
+        /* Estilos para mostrar banderas en el selector */
+        #currency-selector {
+            background-image: none;
+        }
+
+        #currency-selector option {
+            padding-left: 30px;
+            background-repeat: no-repeat;
+            background-position: 5px center;
+            background-size: 20px 15px;
+        }
+
+        /* Mapeo de monedas a banderas usando flagcdn.com */
+        #currency-selector option[value="USD"] {
+            background-image: url('https://flagcdn.com/w20/us.png');
+        }
+
+        #currency-selector option[value="EUR"] {
+            background-image: url('https://flagcdn.com/w20/eu.png');
+        }
+
+        #currency-selector option[value="VES"] {
+            background-image: url('https://flagcdn.com/w20/ve.png');
+        }
+
+        #currency-selector option[value="COP"] {
+            background-image: url('https://flagcdn.com/w20/co.png');
+        }
+
+        #currency-selector option[value="MXN"] {
+            background-image: url('https://flagcdn.com/w20/mx.png');
+        }
+
+        #currency-selector option[value="PEN"] {
+            background-image: url('https://flagcdn.com/w20/pe.png');
+        }
+
+        #currency-selector option[value="ARS"] {
+            background-image: url('https://flagcdn.com/w20/ar.png');
+        }
+
+        #currency-selector option[value="CLP"] {
+            background-image: url('https://flagcdn.com/w20/cl.png');
+        }
+    </style>
+</head>
+
+<body class="bg-light p-5">
+    <div class="container text-center">
+        <h1 class="mb-4">Support Tokelia</h1>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card p-4 shadow-sm mb-4">
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <div id="currency-selector-wrapper" style="position: relative;">
+                            <select id="currency-selector" class="form-control" style="display: none;">
+                                <option value="USD">USD - United States Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="VES">VES - Venezuelan Bolívar Soberano</option>
+                                <option value="COP">COP - Colombian Peso</option>
+                                <option value="MXN">MXN - Mexican Peso</option>
+                                <option value="PEN">PEN - Peruvian Sol</option>
+                                <option value="ARS">ARS - Argentine Peso</option>
+                                <option value="CLP">CLP - Chilean Peso</option>
+                            </select>
+                            <div id="currency-custom-select" class="form-control"
+                                style="cursor: pointer; display: flex; align-items: center; padding: 0.375rem 0.75rem;">
+                                <img id="currency-flag" src="" alt=""
+                                    style="width: 20px; height: 15px; margin-right: 8px; display: none;">
+                                <span id="currency-display">USD - United States Dollar</span>
+                                <span style="margin-left: auto;">▼</span>
+                            </div>
+                            <div id="currency-dropdown"
+                                style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ced4da; border-radius: 0.25rem; max-height: 300px; overflow-y: auto; z-index: 1000; margin-top: 2px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount Type</label>
+                        <div class="btn-group btn-group-toggle d-block" data-toggle="buttons">
+                            <label class="btn btn-outline-info active">
+                                <input type="radio" name="amount-type" value="fixed" checked> Fixed
+                            </label>
+                            <label class="btn btn-outline-info">
+                                <input type="radio" name="amount-type" value="variable"> Variable
+                            </label>
+                        </div>
+                    </div>
+                    <div id="fixed-amount-container">
+                        <label>Select Amount</label>
+                        <div class="d-flex justify-content-center mt-2 flex-wrap" id="amount-selector">
+                            <button class="btn btn-outline-primary m-1 amount-btn sticky-top"
+                                data-amount="1">$1</button>
+                            <button class="btn btn-outline-primary m-1 amount-btn" data-amount="5">$5</button>
+                            <button class="btn btn-outline-primary m-1 amount-btn" data-amount="10">$10</button>
+                            <button class="btn btn-outline-primary m-1 amount-btn" data-amount="20">$20</button>
+                            <button class="btn btn-outline-primary m-1 amount-btn" data-amount="50">$50</button>
+                            <button class="btn btn-outline-primary m-1 amount-btn" data-amount="100">$100</button>
+                        </div>
+                    </div>
+                    <div id="variable-amount-container" style="display: none;">
+                        <div class="form-group">
+                            <label>Amount Start (Valor inicial)</label>
+                            <input type="number" id="amount-start" class="form-control" value="1" min="0" step="0.01">
+                            <small class="form-text text-muted">Valor inicial que se mostrará</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount Min (Mínimo)</label>
+                            <input type="number" id="amount-min" class="form-control" value="1" min="0" step="0.01">
+                            <small class="form-text text-muted">Cantidad mínima que el usuario puede ingresar</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount Max (Máximo)</label>
+                            <input type="number" id="amount-max" class="form-control" value="" min="0" step="0.01">
+                            <small class="form-text text-muted">Cantidad máxima que el usuario puede ingresar
+                                (opcional)</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount Step (Incremento)</label>
+                            <input type="number" id="amount-step" class="form-control" value="1" min="0.01" step="0.01">
+                            <small class="form-text text-muted">Incremento para ajustar el monto</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Fee Platform (%)</label>
+                        <input type="number" id="fee-platform" class="form-control" value="0" min="0" max="100"
+                            step="0.1">
+                        <small class="form-text text-muted">Fee aplicado al cambio de crypto (se suma al valor en
+                            crypto, no al amount mostrado)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Wallet Platform (Dirección que recibe el fee)</label>
+                        <input type="text" id="wallet-platform" class="form-control" value=""
+                            placeholder="0x... o dirección Solana">
+                        <small class="form-text text-muted">Dirección de la wallet que recibirá el fee del swap</small>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>2. Receiver Address</h3>
+                    <div class="form-group">
+                        <label>Receiver Address</label>
+                        <input type="text" id="receiver-address" class="form-control"
+                            placeholder="0x... or Solana address" value="0xeb1d59cf1d10cee651cd697ca460ef58b6a559a3">
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>3. Select Language</h3>
+                    <div class="d-flex justify-content-center mt-3 flex-wrap" id="lang-selector">
+                        <button class="btn btn-outline-secondary m-1 lang-btn selected" data-lang="en">EN</button>
+                        <button class="btn btn-outline-secondary m-1 lang-btn" data-lang="es">ES</button>
+                        <button class="btn btn-outline-secondary m-1 lang-btn" data-lang="fr">FR</button>
+                        <button class="btn btn-outline-secondary m-1 lang-btn" data-lang="pt">PT</button>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>4. Button Type</h3>
+                    <div class="form-group">
+                        <label>Button Type</label>
+                        <select id="button-type" class="form-control">
+                            <option value="pay">Pay / Pagar</option>
+                            <option value="recharge">Recharge / Recargar</option>
+                            <option value="donation">Donation / Donación</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>5. Select Theme Mode</h3>
+                    <div class="form-group">
+                        <label>Theme Mode</label>
+                        <select id="theme-mode" class="form-control">
+                            <option value="auto">Auto (Detecta automáticamente)</option>
+                            <option value="light">Light (Forzar modo claro)</option>
+                            <option value="dark">Dark (Forzar modo oscuro)</option>
+                        </select>
+                        <small class="form-text text-muted">Selecciona si quieres que el widget detecte automáticamente
+                            el modo del sistema o forzar un modo específico</small>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>6. Customize Style (Light Mode)</h3>
+                    <div class="form-group">
+                        <label>Primary Color</label>
+                        <input type="color" id="primary-color" class="form-control" value="#ea357a">
+                    </div>
+                    <div class="form-group">
+                        <label>Text Color</label>
+                        <input type="color" id="text-color" class="form-control" value="#212529">
+                    </div>
+                    <div class="form-group">
+                        <label>Button Text Color</label>
+                        <input type="color" id="btn-text-color" class="form-control" value="#ffffff">
+                    </div>
+                    <div class="form-group">
+                        <label>Icons Color</label>
+                        <input type="color" id="icons-color" class="form-control" value="#ea357a">
+                    </div>
+                    <div class="form-group">
+                        <label>Font Family</label>
+                        <select id="font-family" class="form-control">
+                            <option value="">Default</option>
+                            <option value="'Courier New', Courier, monospace">Courier New</option>
+                            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                            <option value="'Arial', sans-serif">Arial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>7. Customize Style (Dark Mode)</h3>
+                    <small class="text-muted mb-3 d-block">Los estilos de modo oscuro se aplican automáticamente cuando
+                        el sistema del usuario está en modo oscuro (si el modo está en "Auto")</small>
+                    <div class="form-group">
+                        <label>Primary Color (Dark)</label>
+                        <input type="color" id="primary-color-dark" class="form-control" value="#c21e5d">
+                    </div>
+                    <div class="form-group">
+                        <label>Text Color (Dark)</label>
+                        <input type="color" id="text-color-dark" class="form-control" value="#d5d9dd">
+                    </div>
+                    <div class="form-group">
+                        <label>Button Text Color (Dark)</label>
+                        <input type="color" id="btn-text-color-dark" class="form-control" value="#ffffff">
+                    </div>
+                    <div class="form-group">
+                        <label>Icons Color (Dark)</label>
+                        <input type="color" id="icons-color-dark" class="form-control" value="#d5d9dd">
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>8. Configure Branding</h3>
+                    <div class="form-group">
+                        <label>Support URL</label>
+                        <input type="text" id="support-url" class="form-control" placeholder="https://support.depay.com"
+                            value="https://tu-soporte.com">
+                        <small class="form-text text-muted">Leave empty for default DePay support</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Powered By Name</label>
+                        <input type="text" id="powered-by-name" class="form-control" placeholder="DePay"
+                            value="Tu Marca">
+                        <small class="form-text text-muted">Leave empty for default</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Powered By URL</label>
+                        <input type="text" id="powered-by-url" class="form-control" placeholder="https://depay.com"
+                            value="https://tu-sitio.com">
+                        <small class="form-text text-muted">Leave empty for default</small>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm mb-4">
+                    <h3>9. Eventos / Callbacks</h3>
+                    <small class="text-muted mb-3 d-block">Selecciona qué eventos quieres capturar del widget</small>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="event-before" checked>
+                            <label class="form-check-label" for="event-before">
+                                <strong>before</strong> - Antes de enviar el pago a la wallet
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="event-sent" checked>
+                            <label class="form-check-label" for="event-sent">
+                                <strong>sent</strong> - Cuando el pago se envía a la red (antes de confirmar)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="event-succeeded" checked>
+                            <label class="form-check-label" for="event-succeeded">
+                                <strong>succeeded</strong> - Cuando el pago se confirma exitosamente
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="event-validated" checked>
+                            <label class="form-check-label" for="event-validated">
+                                <strong>validated</strong> - Cuando DePay valida el pago
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="event-failed" checked>
+                            <label class="form-check-label" for="event-failed">
+                                <strong>failed</strong> - Cuando el pago falla en la blockchain
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="event-error" checked>
+                            <label class="form-check-label" for="event-error">
+                                <strong>error</strong> - Errores no críticos manejados por el widget
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="event-critical" checked>
+                            <label class="form-check-label" for="event-critical">
+                                <strong>critical</strong> - Errores críticos que el widget no puede manejar
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-success btn-lg btn-block py-3" id="pay-btn">
+                    Show Widget
+                </button>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Widget Preview</h5>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center bg-white rounded"
+                        style="min-height: 800px;">
+                        <div id="widget-container"
+                            style="position: relative; width: 100%; height: 100%; min-height: 800px; display: flex; align-items: center; justify-content: center;">
+                            <p class="text-muted">Widget will appear here</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Eventos Capturados</h5>
+                        <button class="btn btn-sm btn-outline-secondary" id="clear-events">Limpiar</button>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <div id="events-log">
+                            <p class="text-muted text-center">Los eventos aparecerán aquí cuando ocurran...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let selectedAmount = 1;
+            let selectedLang = 'en';
+            let selectedCurrency = 'USD';
+            let amountType = 'fixed';
+            let selectedButtonType = 'pay';
+            let widgetInstance = null;
+
+            // Función para detectar la moneda del usuario
+            function detectUserCurrency() {
+                try {
+                    // Obtener todos los idiomas del navegador
+                    const languages = navigator.languages || [navigator.language || navigator.userLanguage || 'en-US'];
+                    const locale = languages[0];
+
+                    const localeParts = locale.split('-');
+                    const languageCode = localeParts[0]?.toLowerCase();
+                    const countryCode = localeParts[1]?.toUpperCase();
+
+                    // Mapeo de códigos de país a monedas
+                    const countryToCurrency = {
+                        'US': 'USD', 'CA': 'CAD', 'MX': 'MXN', 'BR': 'BRL', 'AR': 'ARS',
+                        'CO': 'COP', 'CL': 'CLP', 'PE': 'PEN', 'VE': 'VES', 'EC': 'USD',
+                        'GB': 'GBP', 'IE': 'EUR', 'FR': 'EUR', 'DE': 'EUR', 'IT': 'EUR',
+                        'ES': 'EUR', 'PT': 'EUR', 'NL': 'EUR', 'BE': 'EUR', 'AT': 'EUR',
+                        'FI': 'EUR', 'GR': 'EUR', 'LU': 'EUR', 'MT': 'EUR', 'CY': 'EUR',
+                        'SK': 'EUR', 'SI': 'EUR', 'EE': 'EUR', 'LV': 'EUR', 'LT': 'EUR',
+                        'JP': 'JPY', 'CN': 'CNY', 'KR': 'KRW', 'IN': 'INR', 'AU': 'AUD',
+                        'NZ': 'NZD', 'ZA': 'ZAR', 'EG': 'EGP', 'NG': 'NGN', 'KE': 'KES',
+                        'GH': 'GHS', 'TR': 'TRY', 'RU': 'RUB', 'PL': 'PLN', 'SE': 'SEK',
+                        'NO': 'NOK', 'DK': 'DKK', 'CH': 'CHF', 'SG': 'SGD', 'MY': 'MYR',
+                        'TH': 'THB', 'ID': 'IDR', 'PH': 'PHP', 'VN': 'VND', 'TW': 'TWD',
+                        'HK': 'HKD', 'AE': 'AED', 'SA': 'SAR', 'IL': 'ILS', 'UY': 'UYU',
+                        'PY': 'PYG', 'BO': 'BOB', 'CR': 'CRC', 'PA': 'PAB', 'GT': 'GTQ',
+                        'HN': 'HNL', 'NI': 'NIO', 'SV': 'USD', 'DO': 'DOP', 'CU': 'CUP',
+                        'JM': 'JMD', 'TT': 'TTD', 'BB': 'BBD', 'BS': 'BSD', 'KY': 'KYD',
+                        'BZ': 'BZD', 'GY': 'GYD', 'SR': 'SRD'
+                    };
+
+                    // Método 1: Intentar detectar desde el código de país del locale
+                    if (countryCode && countryToCurrency[countryCode]) {
+                        const detected = countryToCurrency[countryCode];
+                        return detected;
+                    }
+
+                    // Método 2: Intentar usar Intl para detectar la zona horaria y deducir el país
+                    try {
+                        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+                        // Mapeo de zonas horarias comunes a monedas
+                        const timeZoneToCurrency = {
+                            'Europe/Madrid': 'EUR', 'Europe/Paris': 'EUR', 'Europe/Berlin': 'EUR',
+                            'Europe/Rome': 'EUR', 'Europe/Amsterdam': 'EUR', 'Europe/Brussels': 'EUR',
+                            'Europe/Vienna': 'EUR', 'Europe/Lisbon': 'EUR', 'Europe/Dublin': 'EUR',
+                            'Europe/Helsinki': 'EUR', 'Europe/Athens': 'EUR', 'Europe/Luxembourg': 'EUR',
+                            'Europe/Malta': 'EUR', 'Europe/Nicosia': 'EUR', 'Europe/Bratislava': 'EUR',
+                            'Europe/Ljubljana': 'EUR', 'Europe/Tallinn': 'EUR', 'Europe/Riga': 'EUR',
+                            'Europe/Vilnius': 'EUR', 'America/New_York': 'USD', 'America/Los_Angeles': 'USD',
+                            'America/Chicago': 'USD', 'America/Denver': 'USD', 'America/Toronto': 'CAD',
+                            'America/Mexico_City': 'MXN', 'America/Sao_Paulo': 'BRL', 'America/Argentina/Buenos_Aires': 'ARS',
+                            'America/Bogota': 'COP', 'America/Lima': 'PEN', 'America/Caracas': 'VES',
+                            'America/Santiago': 'CLP', 'Europe/London': 'GBP', 'Asia/Tokyo': 'JPY',
+                            'Asia/Shanghai': 'CNY', 'Asia/Seoul': 'KRW', 'Asia/Kolkata': 'INR',
+                            'Australia/Sydney': 'AUD', 'Pacific/Auckland': 'NZD'
+                        };
+
+                        if (timeZoneToCurrency[timeZone]) {
+                            const detected = timeZoneToCurrency[timeZone];
+                            return detected;
+                        }
+                    } catch (tzError) {
+                        // Error getting timezone
+                    }
+
+                    // Método 3: Si el idioma es español pero no hay código de país, usar EUR (España)
+                    if (languageCode === 'es') {
+                        return 'EUR';
+                    }
+
+                    // Si no se detectó nada, usar USD como fallback
+                    return 'USD';
+                } catch (error) {
+                    return 'USD';
+                }
+            }
+
+            // Preseleccionar la moneda del usuario
+            const detectedCurrency = detectUserCurrency();
+            const currencySelector = document.getElementById('currency-selector');
+            currencySelector.value = detectedCurrency;
+            selectedCurrency = detectedCurrency;
+
+            // Inicializar el selector personalizado después de definir las funciones
+            // (las funciones se definen más abajo)
+
+            // Mostrar/ocultar dropdown
+            document.getElementById('currency-custom-select').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dropdown = document.getElementById('currency-dropdown');
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Cerrar dropdown al hacer clic fuera
+            document.addEventListener('click', (e) => {
+                const wrapper = document.getElementById('currency-selector-wrapper');
+                if (wrapper && !wrapper.contains(e.target)) {
+                    const dropdown = document.getElementById('currency-dropdown');
+                    if (dropdown) dropdown.style.display = 'none';
+                }
+            });
+
+            // Mapeo de monedas a códigos de país para banderas (definido antes de usarse)
+            const currencyToCountryCode = {
+                'AED': 'ae', 'AFN': 'af', 'ALL': 'al', 'AMD': 'am', 'ANG': 'cw',
+                'AOA': 'ao', 'ARS': 'ar', 'AUD': 'au', 'AWG': 'aw', 'AZN': 'az',
+                'BAM': 'ba', 'BBD': 'bb', 'BDT': 'bd', 'BGN': 'bg', 'BHD': 'bh',
+                'BIF': 'bi', 'BMD': 'bm', 'BND': 'bn', 'BOB': 'bo', 'BRL': 'br',
+                'BSD': 'bs', 'BTN': 'bt', 'BWP': 'bw', 'BYN': 'by', 'BZD': 'bz',
+                'CAD': 'ca', 'CDF': 'cd', 'CHF': 'ch', 'CLF': 'cl', 'CLP': 'cl',
+                'CNH': 'cn', 'CNY': 'cn', 'COP': 'co', 'CRC': 'cr', 'CUP': 'cu',
+                'CVE': 'cv', 'CZK': 'cz', 'DJF': 'dj', 'DKK': 'dk', 'DOP': 'do',
+                'DZD': 'dz', 'EGP': 'eg', 'ERN': 'er', 'ETB': 'et', 'EUR': 'eu',
+                'FJD': 'fj', 'FKP': 'fk', 'FOK': 'fo', 'GBP': 'gb', 'GEL': 'ge',
+                'GGP': 'gg', 'GHS': 'gh', 'GIP': 'gi', 'GMD': 'gm', 'GNF': 'gn',
+                'GTQ': 'gt', 'GYD': 'gy', 'HKD': 'hk', 'HNL': 'hn', 'HRK': 'hr',
+                'HTG': 'ht', 'HUF': 'hu', 'IDR': 'id', 'ILS': 'il', 'IMP': 'im',
+                'INR': 'in', 'IQD': 'iq', 'IRR': 'ir', 'ISK': 'is', 'JEP': 'je',
+                'JMD': 'jm', 'JOD': 'jo', 'JPY': 'jp', 'KES': 'ke', 'KGS': 'kg',
+                'KHR': 'kh', 'KID': 'ki', 'KMF': 'km', 'KRW': 'kr', 'KWD': 'kw',
+                'KYD': 'ky', 'KZT': 'kz', 'LAK': 'la', 'LBP': 'lb', 'LKR': 'lk',
+                'LRD': 'lr', 'LSL': 'ls', 'LYD': 'ly', 'MAD': 'ma', 'MDL': 'md',
+                'MGA': 'mg', 'MKD': 'mk', 'MMK': 'mm', 'MNT': 'mn', 'MOP': 'mo',
+                'MRU': 'mr', 'MUR': 'mu', 'MVR': 'mv', 'MWK': 'mw', 'MXN': 'mx',
+                'MYR': 'my', 'MZN': 'mz', 'NAD': 'na', 'NGN': 'ng', 'NIO': 'ni',
+                'NOK': 'no', 'NPR': 'np', 'NZD': 'nz', 'OMR': 'om', 'PAB': 'pa',
+                'PEN': 'pe', 'PGK': 'pg', 'PHP': 'ph', 'PKR': 'pk', 'PLN': 'pl',
+                'PYG': 'py', 'QAR': 'qa', 'RON': 'ro', 'RSD': 'rs', 'RUB': 'ru',
+                'RWF': 'rw', 'SAR': 'sa', 'SBD': 'sb', 'SCR': 'sc', 'SDG': 'sd',
+                'SEK': 'se', 'SGD': 'sg', 'SHP': 'sh', 'SLE': 'sl', 'SOS': 'so',
+                'SRD': 'sr', 'SSP': 'ss', 'STN': 'st', 'SYP': 'sy', 'SZL': 'sz',
+                'THB': 'th', 'TJS': 'tj', 'TMT': 'tm', 'TND': 'tn', 'TOP': 'to',
+                'TRY': 'tr', 'TTD': 'tt', 'TVD': 'tv', 'TWD': 'tw', 'TZS': 'tz',
+                'UAH': 'ua', 'UGX': 'ug', 'USD': 'us', 'UYU': 'uy', 'UZS': 'uz',
+                'VES': 've', 'VND': 'vn', 'VUV': 'vu', 'WST': 'ws', 'XAF': 'cm',
+                'XCD': 'ag', 'XDR': 'un', 'XOF': 'sn', 'XPF': 'pf', 'YER': 'ye',
+                'ZAR': 'za', 'ZMW': 'zm', 'ZWL': 'zw'
+            };
+
+            // Mapeo de monedas a nombres
+            const currencyNames = {
+                'AED': 'UAE Dirham', 'AFN': 'Afghan Afghani', 'ALL': 'Albanian Lek',
+                'AMD': 'Armenian Dram', 'ANG': 'Netherlands Antillian Guilder', 'AOA': 'Angolan Kwanza',
+                'ARS': 'Argentine Peso', 'AUD': 'Australian Dollar', 'AWG': 'Aruban Florin',
+                'AZN': 'Azerbaijani Manat', 'BAM': 'Bosnia and Herzegovina Mark', 'BBD': 'Barbados Dollar',
+                'BDT': 'Bangladeshi Taka', 'BGN': 'Bulgarian Lev', 'BHD': 'Bahraini Dinar',
+                'BIF': 'Burundian Franc', 'BMD': 'Bermudian Dollar', 'BND': 'Brunei Dollar',
+                'BOB': 'Bolivian Boliviano', 'BRL': 'Brazilian Real', 'BSD': 'Bahamian Dollar',
+                'BTN': 'Bhutanese Ngultrum', 'BWP': 'Botswana Pula', 'BYN': 'Belarusian Ruble',
+                'BZD': 'Belize Dollar', 'CAD': 'Canadian Dollar', 'CDF': 'Congolese Franc',
+                'CHF': 'Swiss Franc', 'CLF': 'Chilean Unidad de Fomento', 'CLP': 'Chilean Peso',
+                'CNH': 'Offshore Chinese Renminbi', 'CNY': 'Chinese Renminbi', 'COP': 'Colombian Peso',
+                'CRC': 'Costa Rican Colon', 'CUP': 'Cuban Peso', 'CVE': 'Cape Verdean Escudo',
+                'CZK': 'Czech Koruna', 'DJF': 'Djiboutian Franc', 'DKK': 'Danish Krone',
+                'DOP': 'Dominican Peso', 'DZD': 'Algerian Dinar', 'EGP': 'Egyptian Pound',
+                'ERN': 'Eritrean Nakfa', 'ETB': 'Ethiopian Birr', 'EUR': 'Euro',
+                'FJD': 'Fiji Dollar', 'FKP': 'Falkland Islands Pound', 'FOK': 'Faroese Króna',
+                'GBP': 'Pound Sterling', 'GEL': 'Georgian Lari', 'GGP': 'Guernsey Pound',
+                'GHS': 'Ghanaian Cedi', 'GIP': 'Gibraltar Pound', 'GMD': 'Gambian Dalasi',
+                'GNF': 'Guinean Franc', 'GTQ': 'Guatemalan Quetzal', 'GYD': 'Guyanese Dollar',
+                'HKD': 'Hong Kong Dollar', 'HNL': 'Honduran Lempira', 'HRK': 'Croatian Kuna',
+                'HTG': 'Haitian Gourde', 'HUF': 'Hungarian Forint', 'IDR': 'Indonesian Rupiah',
+                'ILS': 'Israeli New Shekel', 'IMP': 'Manx Pound', 'INR': 'Indian Rupee',
+                'IQD': 'Iraqi Dinar', 'IRR': 'Iranian Rial', 'ISK': 'Icelandic Króna',
+                'JEP': 'Jersey Pound', 'JMD': 'Jamaican Dollar', 'JOD': 'Jordanian Dinar',
+                'JPY': 'Japanese Yen', 'KES': 'Kenyan Shilling', 'KGS': 'Kyrgyzstani Som',
+                'KHR': 'Cambodian Riel', 'KID': 'Kiribati Dollar', 'KMF': 'Comorian Franc',
+                'KRW': 'South Korean Won', 'KWD': 'Kuwaiti Dinar', 'KYD': 'Cayman Islands Dollar',
+                'KZT': 'Kazakhstani Tenge', 'LAK': 'Lao Kip', 'LBP': 'Lebanese Pound',
+                'LKR': 'Sri Lanka Rupee', 'LRD': 'Liberian Dollar', 'LSL': 'Lesotho Loti',
+                'LYD': 'Libyan Dinar', 'MAD': 'Moroccan Dirham', 'MDL': 'Moldovan Leu',
+                'MGA': 'Malagasy Ariary', 'MKD': 'Macedonian Denar', 'MMK': 'Burmese Kyat',
+                'MNT': 'Mongolian Tögrög', 'MOP': 'Macanese Pataca', 'MRU': 'Mauritanian Ouguiya',
+                'MUR': 'Mauritian Rupee', 'MVR': 'Maldivian Rufiyaa', 'MWK': 'Malawian Kwacha',
+                'MXN': 'Mexican Peso', 'MYR': 'Malaysian Ringgit', 'MZN': 'Mozambican Metical',
+                'NAD': 'Namibian Dollar', 'NGN': 'Nigerian Naira', 'NIO': 'Nicaraguan Córdoba',
+                'NOK': 'Norwegian Krone', 'NPR': 'Nepalese Rupee', 'NZD': 'New Zealand Dollar',
+                'OMR': 'Omani Rial', 'PAB': 'Panamanian Balboa', 'PEN': 'Peruvian Sol',
+                'PGK': 'Papua New Guinean Kina', 'PHP': 'Philippine Peso', 'PKR': 'Pakistani Rupee',
+                'PLN': 'Polish Złoty', 'PYG': 'Paraguayan Guaraní', 'QAR': 'Qatari Riyal',
+                'RON': 'Romanian Leu', 'RSD': 'Serbian Dinar', 'RUB': 'Russian Ruble',
+                'RWF': 'Rwandan Franc', 'SAR': 'Saudi Riyal', 'SBD': 'Solomon Islands Dollar',
+                'SCR': 'Seychellois Rupee', 'SDG': 'Sudanese Pound', 'SEK': 'Swedish Krona',
+                'SGD': 'Singapore Dollar', 'SHP': 'Saint Helena Pound', 'SLE': 'Sierra Leonean Leone',
+                'SOS': 'Somali Shilling', 'SRD': 'Surinamese Dollar', 'SSP': 'South Sudanese Pound',
+                'STN': 'São Tomé and Príncipe Dobra', 'SYP': 'Syrian Pound', 'SZL': 'Eswatini Lilangeni',
+                'THB': 'Thai Baht', 'TJS': 'Tajikistani Somoni', 'TMT': 'Turkmenistan Manat',
+                'TND': 'Tunisian Dinar', 'TOP': 'Tongan Paʻanga', 'TRY': 'Turkish Lira',
+                'TTD': 'Trinidad and Tobago Dollar', 'TVD': 'Tuvaluan Dollar', 'TWD': 'New Taiwan Dollar',
+                'TZS': 'Tanzanian Shilling', 'UAH': 'Ukrainian Hryvnia', 'UGX': 'Ugandan Shilling',
+                'USD': 'United States Dollar', 'UYU': 'Uruguayan Peso', 'UZS': 'Uzbekistani So\'m',
+                'VES': 'Venezuelan Bolívar Soberano', 'VND': 'Vietnamese Đồng', 'VUV': 'Vanuatu Vatu',
+                'WST': 'Samoan Tālā', 'XAF': 'Central African CFA Franc', 'XCD': 'East Caribbean Dollar',
+                'XDR': 'Special Drawing Rights', 'XOF': 'West African CFA franc', 'XPF': 'CFP Franc',
+                'YER': 'Yemeni Rial', 'ZAR': 'South African Rand', 'ZMW': 'Zambian Kwacha',
+                'ZWL': 'Zimbabwean Dollar'
+            };
+
+            // Función para construir el dropdown
+            function buildCurrencyDropdown() {
+                const dropdown = document.getElementById('currency-dropdown');
+                const select = document.getElementById('currency-selector');
+                if (!dropdown || !select) return;
+                dropdown.innerHTML = '';
+
+                Array.from(select.options).forEach(option => {
+                    const currency = option.value;
+                    const countryCode = currencyToCountryCode[currency];
+                    const div = document.createElement('div');
+                    div.className = 'currency-option';
+                    div.style.cssText = 'padding: 8px 12px; cursor: pointer; display: flex; align-items: center; border-bottom: 1px solid #f0f0f0;';
+                    div.innerHTML = `
+                        ${countryCode ? `<img src="https://flagcdn.com/w20/${countryCode}.png" style="width: 20px; height: 15px; margin-right: 8px;">` : '<span style="width: 28px; display: inline-block;"></span>'}
+                        <span>${option.textContent}</span>
+                    `;
+                    div.addEventListener('click', () => {
+                        select.value = currency;
+                        selectedCurrency = currency;
+                        updateCurrencyDisplay(currency);
+                        dropdown.style.display = 'none';
+                        select.dispatchEvent(new Event('change'));
+                    });
+                    div.addEventListener('mouseenter', () => {
+                        div.style.backgroundColor = '#f8f9fa';
+                    });
+                    div.addEventListener('mouseleave', () => {
+                        div.style.backgroundColor = 'white';
+                    });
+                    dropdown.appendChild(div);
+                });
+            }
+
+            // Función para actualizar el display del selector
+            function updateCurrencyDisplay(currency) {
+                const flagImg = document.getElementById('currency-flag');
+                const displayText = document.getElementById('currency-display');
+                const countryCode = currencyToCountryCode[currency];
+
+                if (flagImg) {
+                    if (countryCode) {
+                        flagImg.src = `https://flagcdn.com/w20/${countryCode}.png`;
+                        flagImg.style.display = 'inline-block';
+                    } else {
+                        flagImg.style.display = 'none';
+                    }
+                }
+
+                if (displayText) {
+                    displayText.textContent = `${currency} - ${currencyNames[currency] || currency}`;
+                }
+            }
+
+            // Función para actualizar la bandera del selector (mantener compatibilidad)
+            function updateCurrencyFlag(currency) {
+                updateCurrencyDisplay(currency);
+            }
+
+            // Inicializar el selector personalizado después de definir todas las funciones
+            buildCurrencyDropdown();
+            updateCurrencyDisplay(detectedCurrency);
+
+            // Currency Selection Logic
+            document.getElementById('currency-selector').addEventListener('change', (e) => {
+                selectedCurrency = e.target.value;
+                updateCurrencyDisplay(selectedCurrency);
+                const symbols = {
+                    'USD': '$', 'EUR': '€', 'GBP': '£', 'VES': 'Bs', 'COP': '$',
+                    'ARS': '$', 'MXN': '$', 'PEN': 'S/', 'BRL': 'R$', 'CLP': '$',
+                    'JPY': '¥', 'CNY': '¥', 'INR': '₹', 'KRW': '₩', 'THB': '฿',
+                    'RUB': '₽', 'TRY': '₺', 'ZAR': 'R', 'AUD': 'A$', 'NZD': 'NZ$',
+                    'CAD': 'C$', 'CHF': 'CHF', 'SEK': 'kr', 'NOK': 'kr', 'DKK': 'kr',
+                    'PLN': 'zł', 'HUF': 'Ft', 'CZK': 'Kč', 'RON': 'lei', 'BGN': 'лв',
+                    'ILS': '₪', 'AED': 'د.إ', 'SAR': '﷼', 'QAR': '﷼', 'KWD': 'د.ك',
+                    'BHD': '.د.ب', 'OMR': '﷼', 'JOD': 'د.ا', 'LBP': '£', 'EGP': '£',
+                    'NGN': '₦', 'KES': 'KSh', 'GHS': '₵', 'ZMW': 'ZK', 'UGX': 'USh',
+                    'TZS': 'TSh', 'ETB': 'Br', 'MAD': 'د.م.', 'TND': 'د.ت', 'DZD': 'د.ج',
+                    'XOF': 'CFA', 'XAF': 'FCFA', 'XPF': 'F'
+                };
+                document.querySelectorAll('.amount-btn').forEach(btn => {
+                    btn.textContent = (symbols[selectedCurrency] || '') + btn.dataset.amount;
+                });
+            });
+
+            // Amount Type Logic
+            document.querySelectorAll('input[name="amount-type"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    amountType = e.target.value;
+                    document.getElementById('fixed-amount-container').style.display = amountType === 'fixed' ? 'block' : 'none';
+                    document.getElementById('variable-amount-container').style.display = amountType === 'variable' ? 'block' : 'none';
+                });
+            });
+
+            // Amount Selection Logic
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                    selectedAmount = parseFloat(e.target.dataset.amount);
+                });
+            });
+
+            // Set default selection
+            document.querySelector('.amount-btn[data-amount="1"]').classList.add('selected');
+
+            // Language Selection Logic
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                    selectedLang = e.target.dataset.lang;
+                });
+            });
+
+            // Button Type Selection Logic
+            document.getElementById('button-type').addEventListener('change', (e) => {
+                selectedButtonType = e.target.value;
+            });
+
+            // Pay Button Logic
+            document.getElementById('pay-btn').addEventListener('click', async () => {
+
+                // Unmount existing widget if any
+                if (widgetInstance && widgetInstance.unmount) {
+                    widgetInstance.unmount();
+                    widgetInstance = null;
+                    document.getElementById('widget-container').innerHTML = ''; // Clear container
+                }
+
+                const themeMode = document.getElementById('theme-mode').value;
+                const primaryColor = document.getElementById('primary-color').value;
+                const textColor = document.getElementById('text-color').value;
+                const btnTextColor = document.getElementById('btn-text-color').value;
+                const iconsColor = document.getElementById('icons-color').value;
+                const fontFamily = document.getElementById('font-family').value;
+
+                // Dark mode colors
+                const primaryColorDark = document.getElementById('primary-color-dark').value;
+                const textColorDark = document.getElementById('text-color-dark').value;
+                const btnTextColorDark = document.getElementById('btn-text-color-dark').value;
+                const iconsColorDark = document.getElementById('icons-color-dark').value;
+
+                const styleConfig = {};
+
+                // Configurar estilos según el modo seleccionado
+                if (themeMode === 'light') {
+                    // Forzar modo light: solo usar colors (no colorsDarkMode)
+                    // Esto hace que el widget siempre use estos colores independientemente de la detección
+                    styleConfig.colors = {
+                        primary: primaryColor,
+                        text: textColor,
+                        buttonText: btnTextColor,
+                        icons: iconsColor,
+                        background: '#f2f2f2',
+                        cardBackground: '#ffffff'
+                    };
+                    // CSS adicional para asegurar modo light
+                    styleConfig.css = `
+                        .Dialog {
+                            background: #f2f2f2 !important;
+                        }
+                        .Card {
+                            background: #ffffff !important;
+                        }
+                        * {
+                            color: ${textColor} !important;
+                        }
+                    `;
+                } else if (themeMode === 'dark') {
+                    // Forzar modo dark: usar colores dark como colors principales
+                    // Esto hace que el widget use estos colores como si fueran los de light mode
+                    styleConfig.colors = {
+                        primary: primaryColorDark,
+                        text: textColorDark,
+                        buttonText: btnTextColorDark,
+                        icons: iconsColorDark,
+                        background: '#171717',
+                        cardBackground: '#252525'
+                    };
+                    // CSS adicional para asegurar modo dark
+                    styleConfig.css = `
+                        .Dialog {
+                            background: #171717 !important;
+                        }
+                        .Card {
+                            background: #252525 !important;
+                        }
+                        * {
+                            color: ${textColorDark} !important;
+                        }
+                    `;
+                } else {
+                    // Auto: usar ambos colors y colorsDarkMode
+                    // El widget detectará automáticamente según prefers-color-scheme
+                    styleConfig.colors = {
+                        primary: primaryColor,
+                        text: textColor,
+                        buttonText: btnTextColor,
+                        icons: iconsColor
+                    };
+                    styleConfig.colorsDarkMode = {
+                        primary: primaryColorDark,
+                        text: textColorDark,
+                        buttonText: btnTextColorDark,
+                        icons: iconsColorDark
+                    };
+                }
+
+                if (fontFamily) {
+                    styleConfig.fontFamily = fontFamily;
+                }
+
+                // Get branding configuration
+                const supportUrl = document.getElementById('support-url').value.trim();
+                const poweredByName = document.getElementById('powered-by-name').value.trim();
+                const poweredByUrl = document.getElementById('powered-by-url').value.trim();
+                const receiverAddress = document.getElementById('receiver-address').value.trim();
+
+                // Build widget configuration
+                const widgetConfig = {
+                    container: document.getElementById('widget-container'),
+                    locale: selectedLang,
+                    style: styleConfig,
+                    currency: selectedCurrency,
+                    action: selectedButtonType,
+                    help: false
+                };
+
+                // Leer feePlatform y walletPlatform
+                const feePlatform = parseFloat(document.getElementById('fee-platform').value) || 0;
+                const walletPlatform = document.getElementById('wallet-platform').value.trim();
+
+                if (amountType === 'fixed') {
+                    widgetConfig.amount = {
+                        fix: selectedAmount,
+                        currency: selectedCurrency
+                    };
+                } else {
+                    // Leer valores del formulario para amount variable
+                    const amountStart = parseFloat(document.getElementById('amount-start').value) || 1;
+                    const amountMin = parseFloat(document.getElementById('amount-min').value);
+                    const amountMax = parseFloat(document.getElementById('amount-max').value);
+                    const amountStep = parseFloat(document.getElementById('amount-step').value) || 1;
+
+                    widgetConfig.amount = {
+                        start: amountStart,
+                        currency: selectedCurrency
+                    };
+
+                    // Añadir min solo si tiene valor válido
+                    if (amountMin && amountMin > 0) {
+                        widgetConfig.amount.min = amountMin;
+                    }
+
+                    // Añadir max solo si tiene valor válido
+                    if (amountMax && amountMax > 0) {
+                        widgetConfig.amount.max = amountMax;
+                    }
+
+                    // Añadir step solo si tiene valor válido
+                    if (amountStep && amountStep > 0) {
+                        widgetConfig.amount.step = amountStep;
+                    }
+                }
+
+                // Agregar feePlatform a la configuración (se aplicará internamente al swap)
+                if (feePlatform > 0) {
+                    widgetConfig.feePlatform = feePlatform;
+                }
+
+                // Add support URL if provided
+                if (supportUrl) {
+                    widgetConfig.supportUrl = supportUrl;
+                }
+
+                // Add PoweredBy configuration if provided
+                if (poweredByName || poweredByUrl) {
+                    widgetConfig.poweredBy = {};
+                    if (poweredByName) widgetConfig.poweredBy.name = poweredByName;
+                    if (poweredByUrl) widgetConfig.poweredBy.url = poweredByUrl;
+                }
+
+                // Construir accept con fee si feePlatform y walletPlatform están configurados
+                const baseAccept = [
+                    {
+                        blockchain: 'ethereum',
+                        token: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC
+                        receiver: receiverAddress
+                    },
+                    {
+                        blockchain: 'bsc',
+                        token: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // USDC
+                        receiver: receiverAddress
+                    },
+                    {
+                        blockchain: 'polygon',
+                        token: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // USDC
+                        receiver: receiverAddress
+                    }
+                ];
+
+                // Agregar fee a cada accept si feePlatform y walletPlatform están configurados
+                widgetConfig.accept = baseAccept.map(accept => {
+                    if (feePlatform > 0 && walletPlatform) {
+                        return {
+                            ...accept,
+                            fee: {
+                                amount: `${feePlatform}%`,
+                                receiver: walletPlatform
+                            }
+                        };
+                    }
+                    return accept;
+                });
+
+                // Función para agregar eventos al log
+                const addEventToLog = (eventName, data) => {
+                    const eventsLog = document.getElementById('events-log');
+                    if (eventsLog.querySelector('p.text-muted')) {
+                        eventsLog.innerHTML = '';
+                    }
+
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = 'alert alert-info mb-2';
+                    const timestamp = new Date().toLocaleTimeString();
+
+                    let dataStr = '';
+                    try {
+                        dataStr = JSON.stringify(data, null, 2);
+                    } catch (e) {
+                        dataStr = String(data);
+                    }
+
+                    eventDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>${eventName}</strong> <small class="text-muted">(${timestamp})</small>
+                                <pre class="mt-2 mb-0" style="font-size: 11px; max-height: 150px; overflow-y: auto;">${dataStr}</pre>
+                            </div>
+                        </div>
+                    `;
+
+                    eventsLog.insertBefore(eventDiv, eventsLog.firstChild);
+
+                    // Mantener solo los últimos 20 eventos
+                    while (eventsLog.children.length > 20) {
+                        eventsLog.removeChild(eventsLog.lastChild);
+                    }
+                };
+
+                // Configurar callbacks según checkboxes
+                if (document.getElementById('event-before').checked) {
+                    widgetConfig.before = async (payment, from) => {
+                        addEventToLog('before', { payment, from });
+                        // Retornar true para continuar, false para detener
+                        return true;
+                    };
+                }
+
+                if (document.getElementById('event-sent').checked) {
+                    widgetConfig.sent = (transaction, paymentRoute) => {
+                        addEventToLog('sent', { transaction, paymentRoute });
+                    };
+                }
+
+                if (document.getElementById('event-succeeded').checked) {
+                    widgetConfig.succeeded = (transaction, payment) => {
+                        addEventToLog('succeeded', { transaction, payment });
+                    };
+                }
+
+                if (document.getElementById('event-validated').checked) {
+                    widgetConfig.validated = (successful, transaction, payment) => {
+                        addEventToLog('validated', { successful, transaction, payment });
+                    };
+                }
+
+                if (document.getElementById('event-failed').checked) {
+                    widgetConfig.failed = (transaction, error, payment) => {
+                        addEventToLog('failed', { transaction, error, payment });
+                    };
+                }
+
+                if (document.getElementById('event-error').checked) {
+                    widgetConfig.error = (error) => {
+                        addEventToLog('error', { error: error.toString(), errorObject: error });
+                    };
+                }
+
+                if (document.getElementById('event-critical').checked) {
+                    widgetConfig.critical = (error) => {
+                        addEventToLog('critical', { error: error.toString(), errorObject: error });
+                        alert('Error crítico: ' + error.toString());
+                    };
+                }
+
+                // Botón para limpiar eventos
+                document.getElementById('clear-events').addEventListener('click', () => {
+                    const eventsLog = document.getElementById('events-log');
+                    eventsLog.innerHTML = '<p class="text-muted text-center">Los eventos aparecerán aquí cuando ocurran...</p>';
+                });
+
+                // Wait for DePayWidgets to be available
+                const waitForDePayWidgets = () => {
+                    return new Promise((resolve, reject) => {
+                        // Check if already loaded
+                        if (window.DePayWidgets) {
+                            resolve(window.DePayWidgets);
+                            return;
+                        }
+
+                        // Check if there was a load error
+                        if (window._depayWidgetsLoadError) {
+                            reject(new Error('Failed to load tmp/index.dev.js. Please check the console for details.'));
+                            return;
+                        }
+
+                        // Wait up to 10 seconds for DePayWidgets to load
+                        let attempts = 0;
+                        const maxAttempts = 100; // 10 seconds (100 * 100ms)
+                        const checkInterval = setInterval(() => {
+                            attempts++;
+                            if (window.DePayWidgets) {
+                                clearInterval(checkInterval);
+                                resolve(window.DePayWidgets);
+                            } else if (window._depayWidgetsLoadError) {
+                                clearInterval(checkInterval);
+                                reject(new Error('Failed to load tmp/index.dev.js. Please check the console for details.'));
+                            } else if (attempts >= maxAttempts) {
+                                clearInterval(checkInterval);
+                                reject(new Error('DePayWidgets failed to load after 10 seconds. Please check if tmp/index.dev.js is accessible and the build process is running.'));
+                            }
+                        }, 100);
+                    });
+                };
+
+                try {
+                    const DePayWidgets = await waitForDePayWidgets();
+                    widgetInstance = await DePayWidgets.Payment(widgetConfig);
+                } catch (e) {
+                    alert("Failed to load widget: " + e.message + ". Check console for details.");
+                }
+            });
+        </script>
+</body>
+
+</html>

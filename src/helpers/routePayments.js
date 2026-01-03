@@ -12,15 +12,15 @@ import { route } from '@depay/web3-payments'
 
 //#endif
 
-const mergeFromAccounts = (accept, account)=>{
+const mergeFromAccounts = (accept, account) => {
   let from = {}
-  accept.forEach((accept)=>{
+  accept.forEach((accept) => {
     from[accept.blockchain] = account
   })
   return from
 }
 
-export default ({ accept, account, receiver, allow, deny, whitelist, blacklist, best })=>{
+export default ({ accept, account, receiver, allow, deny, whitelist, blacklist, best }) => {
   return route({
     accept,
     from: mergeFromAccounts(accept, account),

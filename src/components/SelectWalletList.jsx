@@ -3,28 +3,30 @@ import ConfigurationContext from '../contexts/ConfigurationContext'
 import throttle from '../helpers/throttle'
 import Fuse from 'fuse.js'
 import React, { useState, useEffect, useRef, useContext, useMemo, useCallback } from 'react'
+import { useTranslation } from '../providers/TranslationProvider'
 import { useVirtualizer } from '@tanstack/react-virtual'
 
-export default (props)=>{
+export default (props) => {
 
   const { wallets: walletsConfiguration } = useContext(ConfigurationContext)
-  let allowList = walletsConfiguration?.allow || walletsConfiguration?.whitelist 
+  const { t } = useTranslation()
+  let allowList = walletsConfiguration?.allow || walletsConfiguration?.whitelist
   let allWallets
-  if(walletsConfiguration?.sort || allowList) {
-    allWallets = useMemo(()=>{
+  if (walletsConfiguration?.sort || allowList) {
+    allWallets = useMemo(() => {
       let adjustedWallets = [...allWalletsOriginal]
 
-      if(walletsConfiguration?.sort) {
-        walletsConfiguration.sort.forEach((sortedWallet, newIndex)=>{
-          let currentListIndex = adjustedWallets.findIndex((unsortedWallet)=>unsortedWallet.name === sortedWallet)
-          if(currentListIndex > -1) {
+      if (walletsConfiguration?.sort) {
+        walletsConfiguration.sort.forEach((sortedWallet, newIndex) => {
+          let currentListIndex = adjustedWallets.findIndex((unsortedWallet) => unsortedWallet.name === sortedWallet)
+          if (currentListIndex > -1) {
             adjustedWallets.splice(newIndex, 0, adjustedWallets.splice(currentListIndex, 1)[0])
           }
         })
       }
 
-      if(allowList) {
-        adjustedWallets = adjustedWallets.filter((wallet)=>allowList.indexOf(wallet.name) > -1)
+      if (allowList) {
+        adjustedWallets = adjustedWallets.filter((wallet) => allowList.indexOf(wallet.name) > -1)
       }
 
       return adjustedWallets
@@ -33,33 +35,33 @@ export default (props)=>{
     allWallets = allWalletsOriginal
   }
 
-  const [ listScrolled, setListScrolled ] = useState(false)
-  const throttledSetListScrolled = useCallback(throttle((value)=>setListScrolled(value), 1000), [])
-  const handleOnScroll = (event)=>{
-    if(!listScrolled) {
+  const [listScrolled, setListScrolled] = useState(false)
+  const throttledSetListScrolled = useCallback(throttle((value) => setListScrolled(value), 1000), [])
+  const handleOnScroll = (event) => {
+    if (!listScrolled) {
       throttledSetListScrolled(true)
     }
-    if(event.target.scrollTop <= 0 && allWallets.length > 9) {
+    if (event.target.scrollTop <= 0 && allWallets.length > 9) {
       throttledSetListScrolled(false)
     }
   }
 
   const parentElement = React.useRef()
   const fuse = new Fuse(allWallets, { keys: ['name'], threshold: 0.3, ignoreFieldNorm: true })
-  const [ resultList, setResultList ] = useState(allWallets)
-  
+  const [resultList, setResultList] = useState(allWallets)
+
   const rowVirtualizer = useVirtualizer({
     count: resultList.length,
     getScrollElement: () => parentElement.current,
     estimateSize: () => 61,
   })
 
-  useEffect(()=>{
-    const results = fuse.search(props.searchTerm).map((result)=>result.item)
-    if(parentElement.current) {
-      parentElement.current.scrollTo(0,0)
+  useEffect(() => {
+    const results = fuse.search(props.searchTerm).map((result) => result.item)
+    if (parentElement.current) {
+      parentElement.current.scrollTo(0, 0)
     }
-    if(props.searchTerm.length) {
+    if (props.searchTerm.length) {
       setResultList(results)
     } else {
       setResultList(allWallets)
@@ -80,8 +82,8 @@ export default (props)=>{
     }
   }, [resultList])
 
-  return(
-    <div ref={ parentElement } onScroll={ handleOnScroll } className={`DialogBody ScrollHeightAnimation ${listScrolled ? 'ScrollHeightMax' : 'ScrollHeightM'} PaddingBottomS PaddingLeftS PaddingRightS`}>
+  return (
+    <div ref={parentElement} onScroll={handleOnScroll} className={`DialogBody ScrollHeightAnimation ${listScrolled ? 'ScrollHeightMax' : 'ScrollHeightM'} PaddingBottomS PaddingLeftS PaddingRightS`}>
       <div
         style={{
           height: `${rowVirtualizer.getTotalSize()}px`,
@@ -90,7 +92,7 @@ export default (props)=>{
         }}
       >
 
-        { rowVirtualizer.getVirtualItems().map((virtualItem) => (
+        {rowVirtualizer.getVirtualItems().map((virtualItem) => (
           <div
             key={virtualItem.key}
             style={{
@@ -106,16 +108,16 @@ export default (props)=>{
               <button
                 type="button"
                 className="Card small"
-                title={`Connect ${resultList[virtualItem.key].name}`}
-                onClick={()=>{ props.onClickWallet({...resultList[virtualItem.key] }) }}
+                title={t('wallet.connect', { wallet: resultList[virtualItem.key].name })}
+                onClick={() => { props.onClickWallet({ ...resultList[virtualItem.key] }) }}
               >
                 <div className="CardImage">
-                  <img className="transparent" src={resultList[virtualItem.key].logo} className="WalletLogoS"/>
+                  <img className="transparent WalletLogoS" src={resultList[virtualItem.key].logo} />
                 </div>
                 <div className="CardBody">
                   <div className="CardBodyWrapper PaddingLeftXS LineHeightXS">
                     <div className="CardText">
-                      { resultList[virtualItem.key].name }
+                      {resultList[virtualItem.key].name}
                     </div>
                   </div>
                 </div>

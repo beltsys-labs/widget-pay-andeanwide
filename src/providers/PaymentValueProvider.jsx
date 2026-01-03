@@ -21,6 +21,30 @@ import UpdatableContext from '../contexts/UpdatableContext'
 import usdAmountForToken from '../helpers/usdAmountForToken'
 import { Currency } from '@depay/local-currency'
 
+// API local para tasas de cambio
+const EXCHANGERATE_API_BASE = `http://localhost:3000/exchange-fiat-rates`
+
+// Función para convertir USD a moneda usando API local
+const convertUSDToCurrency = async (usdAmount, currencyCode) => {
+  try {
+    const response = await fetch(`${EXCHANGERATE_API_BASE}/pair/usd/${currencyCode.toLowerCase()}`)
+    if (response.status === 200) {
+      const data = await response.json()
+      // Asumimos que la API local devuelve un formato similar: { conversion_rate: X } o { rate: X }
+      const conversionRate = data.conversion_rate || data.rate || data.rateValue
+      if (conversionRate) {
+        // API local devuelve: 1 USD = X currency
+        // Necesitamos convertir usdAmount a la moneda: usdAmount * conversion_rate
+        const convertedAmount = usdAmount * conversionRate
+        return new Currency({ amount: convertedAmount, code: currencyCode.toUpperCase() })
+      }
+    }
+  } catch (error) {
+    // Error converting USD to currency
+  }
+  return null
+}
+
 export default (props)=>{
 
   const { updatable } = useContext(UpdatableContext)
@@ -39,10 +63,17 @@ export default (props)=>{
       token: payment.route.fromToken.address,
       amount: payment.route.fromAmount,
       decimals: payment.route.fromDecimals,
-    }).then((usdAmount)=>{
+    }).then(async (usdAmount)=>{
       if(usdAmount != undefined && usdAmount != null) {
-        Currency.fromUSD({ amount: usdAmount, code: currency })
-          .then(setPaymentValue)
+        // Usar ExchangeRate-API para convertir USD a la moneda seleccionada
+        const converted = await convertUSDToCurrency(usdAmount, currency)
+        if (converted) {
+          setPaymentValue(converted)
+        } else {
+          // Fallback a Currency.fromUSD si ExchangeRate-API falla
+          Currency.fromUSD({ amount: usdAmount, code: currency })
+            .then(setPaymentValue)
+        }
       }
     })
   }

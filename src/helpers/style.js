@@ -38,10 +38,10 @@ import TokenImageStyle from '../styles/TokenImageStyle'
 import TooltipStyle from '../styles/TooltipStyle'
 import WalletStyle from '../styles/WalletStyle'
 
-export default (style)=>{
+export default (style) => {
 
   const defaultColors = !isDarkMode() ? {
-    
+
     // LIGHT MODE
 
     primary: '#ea357a',
@@ -53,11 +53,12 @@ export default (style)=>{
     cardBackground: '#ffffff',
     mixActive: '#000000',
     mixPassive: '#ffffff',
-  
+    icons: '#212529',
+
   } : {
-  
+
     // DARK MODE
-  
+
     primary: '#c21e5d',
     buttonText: '#ffffff',
     text: '#d5d9dd',
@@ -67,6 +68,7 @@ export default (style)=>{
     cardBackground: '#252525',
     mixActive: '#aaaaaa',
     mixPassive: '#000000',
+    icons: '#d5d9dd',
 
   }
 
@@ -77,7 +79,7 @@ export default (style)=>{
     fontFamily: style?.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
   }
 
-  return(
+  return (
     [
       ResetStyle(style),
       ActionIndicatorStyle(style),
