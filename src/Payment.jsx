@@ -15,7 +15,6 @@ import PaymentValueProvider from './providers/PaymentValueProvider'
 import TranslationProvider from './providers/TranslationProvider'
 import PoweredBy from './components/PoweredBy'
 import React from 'react'
-import { ToastContainer } from 'react-toastify'
 import requireReactVersion from './helpers/requireReactVersion'
 import SUPPORTED_CURRENCIES from './helpers/supportedCurrencies'
 import UpdatableProvider from './providers/UpdatableProvider'
@@ -165,18 +164,6 @@ let Payment = async ({
               </CallbackProvider>
             </ConfigurationProvider>
           </ErrorProvider>
-          <ToastContainer
-            position="bottom-center"
-            autoClose={4000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
         </TranslationProvider>
     })
     return { unmount }

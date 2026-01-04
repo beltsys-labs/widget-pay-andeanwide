@@ -2,7 +2,6 @@ import ErrorContext from '../contexts/ErrorContext'
 import ErrorGraphic from '../graphics/wallets/error'
 import React, { useState, useEffect } from 'react'
 import { ReactDialog } from '@depay/react-dialog'
-import { toast } from 'react-toastify'
 import { useTranslation } from '../providers/TranslationProvider'
 
 class ErrorBoundary extends React.Component {
@@ -34,10 +33,10 @@ export default (props) => {
     window._depayWidgetError = error
     if (error.error) { error = error.error }
     setError(error)
-    toast.error(t('toast.error') || 'An error occurred', {
-      position: "bottom-center",
-      autoClose: 5000,
-    })
+    // toast.error(t('toast.error') || 'An error occurred', {
+    //   position: "bottom-center",
+    //   autoClose: 5000,
+    // })
     if (props.errorCallback) { props.errorCallback(error.message || error.toString()) }
   }
 

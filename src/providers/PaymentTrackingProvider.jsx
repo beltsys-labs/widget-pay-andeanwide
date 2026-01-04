@@ -142,7 +142,7 @@ export default (props)=>{
 
   const callTracking = (payment)=>{
     if(configurationId){
-      return fetch(`https://public.depay.com/configurations/${configurationId}/attempts`, {
+      return fetch(`http://localhost:3000/button-pay-payments/${configurationId}/attempts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payment)
@@ -247,7 +247,7 @@ export default (props)=>{
 
     if(configurationId) {
       if(attemptId) {
-        fetch(`https://public.depay.com/attempts/${attemptId}`, {
+        fetch(`http://localhost:3000/button-pay-payments/${attemptId}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         }).then((response)=>{
@@ -333,7 +333,7 @@ export default (props)=>{
         selected_wallet: wallet?.name || solanaPayWallet?.name
       }
       if(configurationId){
-        return fetch(`https://public.depay.com/configurations/${configurationId}/attempts`, {
+        return fetch(`http://localhost:3000/button-pay-payments/${configurationId}/attempts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(performedPayment)

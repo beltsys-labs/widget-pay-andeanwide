@@ -26,7 +26,7 @@ export default {
     },
   ],
   external: [
-    ...Object.keys(pkg.dependencies || {}).filter(dep => dep !== 'react-toastify'),
+    ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.peerDependencies || {})
   ],
   plugins: [

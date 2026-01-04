@@ -118,11 +118,12 @@ export default (props) => {
             // Configuration is missing token acceptance!
             loadConfiguration(id, attempt + 1)
           }
-          if (configuration.accept.some((configuration) => !configuration.protocolFee)) {
-            const msg = 'Configuration is missing protocol fee!'
-            setError(msg)
-            throw (msg)
-          }
+          // VALIDACIÓN DE PROTOCOLFEE COMENTADA - Backend propio sin protocolFee obligatorio
+          // if (configuration.accept.some((configuration) => !configuration.protocolFee)) {
+          //   const msg = 'Configuration is missing protocol fee!'
+          //   setError(msg)
+          //   throw (msg)
+          // }
           // Preservar la moneda detectada del usuario (SIEMPRE, no sobrescribir con la del servidor)
           // La moneda del servidor solo se usa si viene en amount.currency como configCurrency
           // IGNORAR completamente configuration.currency del servidor y de props.configuration
