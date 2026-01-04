@@ -97,8 +97,10 @@
                             <option value="dark">Dark (Forzar oscuro)</option>
                         </select>
                         <small class="form-text text-muted">
-                            Auto: usa colores del backend según prefers-color-scheme<br>
-                            Light/Dark: fuerza un modo específico
+                            <strong>Auto:</strong> Widget usa prefers-color-scheme del sistema. Aplica colors (light) o
+                            colorsDarkMode (dark) del backend automáticamente.<br>
+                            <strong>Light:</strong> Fuerza modo claro usando solo colors del backend.<br>
+                            <strong>Dark:</strong> Fuerza modo oscuro usando solo colorsDarkMode del backend.
                         </small>
                     </div>
                 </div>
@@ -258,10 +260,6 @@
                 // Obtener theme mode del formulario
                 const themeMode = document.getElementById('theme-mode').value;
 
-                // Nota: El theme mode (light/dark) se detecta automáticamente del sistema vía prefers-color-scheme
-                // El backend debe enviar tanto 'colors' como 'colorsDarkMode' en style
-                // Para forzar un modo específico, habría que manipular prefers-color-scheme con CSS
-
                 // Configuración del widget
                 const widgetConfig = {
                     // Integration ID - obtiene configuración del backend
@@ -270,9 +268,15 @@
                     // Container
                     container: document.getElementById('widget-container'),
 
-                    // Configuración local (solo locale)
+                    // Configuración local (locale y themeMode)
                     // Estilos, colores, accept, fees, etc. vienen del backend
                     locale: selectedLang,
+
+                    // Theme mode: 'auto', 'light', o 'dark'
+                    // - 'auto': detecta automáticamente del sistema (prefers-color-scheme)
+                    // - 'light': fuerza modo claro usando colors del backend
+                    // - 'dark': fuerza modo oscuro usando colorsDarkMode del backend
+                    themeMode: themeMode,
 
                     // Callbacks (siempre locales)
                     before: async (payment, from) => {

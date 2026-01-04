@@ -93,6 +93,7 @@ let Payment = async ({
   footer,
   poweredBy,
   supportUrl,
+  themeMode,
 }) => {
   requireReactVersion()
   // Si se proporciona una moneda pero no está soportada, establecerla como undefined para que se detecte automáticamente
@@ -112,14 +113,26 @@ let Payment = async ({
         
         finalStyle = {}
         
-        // Merge colors
-        if (backendStyle.colors || localStyle.colors) {
+        // Si themeMode está definido, forzar el uso de un solo set de colores
+        if (themeMode === 'light') {
+          // Forzar modo light: solo usar colors, NO colorsDarkMode
           finalStyle.colors = { ...backendStyle.colors, ...localStyle.colors }
-        }
-        
-        // Merge colorsDarkMode
-        if (backendStyle.colorsDarkMode || localStyle.colorsDarkMode) {
-          finalStyle.colorsDarkMode = { ...backendStyle.colorsDarkMode, ...localStyle.colorsDarkMode }
+          // NO incluir colorsDarkMode para que el widget siempre use colors
+        } else if (themeMode === 'dark') {
+          // Forzar modo dark: usar colorsDarkMode como colors
+          finalStyle.colors = { ...backendStyle.colorsDarkMode, ...localStyle.colorsDarkMode }
+          // NO incluir colorsDarkMode para que el widget siempre use colors (que son las dark)
+        } else {
+          // Auto o undefined: comportamiento por defecto (detectar automáticamente)
+          // Merge colors
+          if (backendStyle.colors || localStyle.colors) {
+            finalStyle.colors = { ...backendStyle.colors, ...localStyle.colors }
+          }
+          
+          // Merge colorsDarkMode
+          if (backendStyle.colorsDarkMode || localStyle.colorsDarkMode) {
+            finalStyle.colorsDarkMode = { ...backendStyle.colorsDarkMode, ...localStyle.colorsDarkMode }
+          }
         }
         
         // Otros campos: local tiene prioridad
