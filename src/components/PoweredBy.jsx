@@ -7,7 +7,7 @@ import { useTranslation } from '../providers/TranslationProvider'
 export default () => {
   const walletContext = useContext(WalletContext)
   const configuration = useContext(ConfigurationContext)
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const wallet = walletContext ? walletContext.wallet : undefined
 
   if (configuration?.footer === false) { return null }
@@ -15,7 +15,23 @@ export default () => {
   // Prioritize configuration over translations
   const poweredByName = configuration?.poweredBy?.name || t('poweredBy.text')
   const poweredByUrl = configuration?.poweredBy?.url || t('poweredBy.link')
-  const poweredByTitle = configuration?.poweredBy?.title || t('poweredBy.title')
+  
+  // Construir el título dinámicamente según el idioma
+  let poweredByTitle
+  if (configuration?.poweredBy?.name) {
+    // Si viene del payload, construir según el idioma
+    const prefixes = {
+      en: 'powered by',
+      es: 'desarrollado por',
+      fr: 'propulsé par',
+      pt: 'desenvolvido por'
+    }
+    const prefix = prefixes[locale] || prefixes.en
+    poweredByTitle = `${prefix} ${poweredByName}`
+  } else {
+    // Si no viene del payload, usar la traducción completa
+    poweredByTitle = t('poweredBy.title')
+  }
 
   return (
     <div className="PoweredByWrapper">
